@@ -12,7 +12,7 @@ export function tryPurchaseNewServers(ns: NS): void {
       if (hostname.length === 0) {
         return;
       }
-      ns.tprint("Purchased new server ", hostname);
+      ns.tprint("Purchased new server: ", hostname);
     }
   } else {
     for (let i = 0; i < playerServers.length; i++) {
@@ -20,11 +20,9 @@ export function tryPurchaseNewServers(ns: NS): void {
       const maxRam = ns.getServerMaxRam(hostName);
       const success = ns.upgradePurchasedServer(hostName, maxRam * 2);
 
-      if (!success) {
-        return;
+      if (success) {
+        ns.tprint("Upgraded ", playerServers[i], " to ", maxRam * 2);
       }
-
-      ns.tprint("Upgraded server ", playerServers[i]);
     }
   }
 }
