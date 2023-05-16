@@ -17,10 +17,16 @@ export function growServers(
       continue;
     }
 
+    const minSecurity = ns.getServerMinSecurityLevel(hostName);
+    const currentSecurity = ns.getServerSecurityLevel(hostName);
+
     const currentMoney = ns.getServerMoneyAvailable(hostName);
     const moneyThresh = ns.getServerMaxMoney(hostName) * 0.9;
 
-    if (currentMoney < moneyThresh) {
+    const isWeak = currentSecurity === minSecurity;
+    const notMaxMoney = currentMoney < moneyThresh;
+
+    if (isWeak && notMaxMoney) {
       let done = false;
       for (let i = 0; i < playerServers.length && done === false; i++) {
         const playerServer = playerServers[i];

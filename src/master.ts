@@ -47,7 +47,7 @@ export async function main(ns: NS): Promise<void> {
     const playerServers = ns.getPurchasedServers();
     playerServers.push("home");
 
-    targetedServers = weakenServers(
+    targetedServers = hackServers(
       ns,
       hackableServers,
       playerServers,
@@ -61,7 +61,7 @@ export async function main(ns: NS): Promise<void> {
       targetedServers
     );
 
-    targetedServers = hackServers(
+    targetedServers = weakenServers(
       ns,
       hackableServers,
       playerServers,
