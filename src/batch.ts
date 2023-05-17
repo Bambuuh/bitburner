@@ -98,7 +98,11 @@ export function batch(ns: NS, target: string, playerServer: string[]): void {
         delayCounter++;
         done = true;
       } else {
-        percentage = percentage - 0.01;
+        if (percentage > 0.01) {
+          percentage = Math.round((percentage - 0.01) * 100) / 100;
+        } else {
+          percentage = Math.round((percentage - 0.001) * 1000) / 1000;
+        }
       }
 
       if (percentage <= 0) {
