@@ -1,7 +1,15 @@
 import { NS } from "@ns";
 
 export async function main(ns: NS): Promise<void> {
-  const [hostName] = ns.args;
+  const [hostName, delay, shouldNotify] = ns.args;
+  if (delay && delay > 0) {
+    const delayTime = +delay + 50;
+    await ns.sleep(delayTime);
+  }
+
   await ns.grow(hostName as string);
-  ns.writePort(1, hostName as string);
+
+  if (shouldNotify) {
+    ns.writePort(2, hostName as string);
+  }
 }

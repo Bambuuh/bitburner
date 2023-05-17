@@ -1,9 +1,11 @@
 import { NS } from "@ns";
 import { tryNukeNewServers } from "./tryHackNew";
 import { tryPurchaseNewServers } from "./tryPurchaseNewServers";
-import { weakenServers } from "./weakenServers";
-import { growServers } from "./growServers";
-import { hackServers } from "./hackServers";
+import { weakenAllServers } from "./weakenAllServers";
+import { growAllServers } from "./growAllServers";
+import { getUpdateFromPort } from "./getUpdateFromPort";
+import { getScores } from "./getScores";
+import { batch } from "./batch";
 
 export async function main(ns: NS): Promise<void> {
   const servers = ns.scan();
@@ -24,20 +26,18 @@ export async function main(ns: NS): Promise<void> {
       server !== "home"
   );
 
-  let targetedServers: string[] = [];
-  while (true) {
-    let portEmpty = false;
+  let lastOptimalTarget = "";
+  let optimalTarget = "";
 
-    while (!portEmpty) {
-      const serverToRemove = ns.readPort(1);
-      if (serverToRemove === "NULL PORT DATA") {
-        portEmpty = true;
-      } else {
-        targetedServers = targetedServers.filter(
-          (server) => server !== serverToRemove
-        );
-      }
-    }
+  let serversBeingWeakened: string[] = [];
+  let serversBeingGrown: string[] = [];
+  let primedServers: string[] = [];
+  while (true) {
+    const updatedWeakening = getUpdateFromPort(ns, serversBeingWeakened, 1);
+    const updatedGrowing = getUpdateFromPort(ns, serversBeingWeakened, 2);
+
+    serversBeingWeakened = updatedWeakening;
+    serversBeingGrown = updatedGrowing;
 
     const nuked = tryNukeNewServers(ns, servers);
     hackableServers.push(...nuked);
@@ -47,26 +47,47 @@ export async function main(ns: NS): Promise<void> {
     const playerServers = ns.getPurchasedServers();
     playerServers.push("home");
 
-    targetedServers = hackServers(
-      ns,
-      hackableServers,
-      playerServers,
-      targetedServers
+    const serversToPrep = hackableServers.filter((server) =>
+      serversBeingWeakened.every((s) => s !== server)
     );
 
-    targetedServers = growServers(
-      ns,
-      hackableServers,
-      playerServers,
-      targetedServers
-    );
+    const weakening = weakenAllServers(ns, playerServers, serversToPrep);
+    serversBeingWeakened.push(...weakening);
 
-    targetedServers = weakenServers(
+    if (serversBeingWeakened.length > 0) {
+      await ns.sleep(1000);
+      continue;
+    }
+
+    const { growing, primed } = growAllServers(
       ns,
-      hackableServers,
       playerServers,
-      targetedServers
+      hackableServers
     );
+    serversBeingGrown.push(...growing);
+    primedServers = primed;
+
+    if (serversBeingGrown.length > 0) {
+      await ns.sleep(1000);
+      continue;
+    }
+
+    const scores = getScores(ns, primedServers);
+
+    lastOptimalTarget = optimalTarget;
+    optimalTarget = scores.reduce((best, server) => {
+      if (server.score > best.score) {
+        return server;
+      }
+
+      return best;
+    }, scores[0]).server;
+
+    if (optimalTarget != lastOptimalTarget) {
+      ns.tprint("Changing target to: ", optimalTarget);
+    }
+
+    batch(ns, optimalTarget, playerServers);
 
     await ns.sleep(1000);
   }
