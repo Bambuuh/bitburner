@@ -74,6 +74,13 @@ export async function main(ns: NS): Promise<void> {
 
     const scores = getScores(ns, primedServers);
 
+    const noViableTargets = scores.every((s) => s.score < 0);
+
+    if (noViableTargets) {
+      await ns.sleep(1000);
+      continue;
+    }
+
     lastOptimalTarget = optimalTarget;
     optimalTarget = scores.reduce((best, server) => {
       if (server.score > best.score) {
