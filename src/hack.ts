@@ -3,7 +3,7 @@ import { NS } from "@ns";
 export async function main(ns: NS): Promise<void> {
   const [hostName, delay, shouldNotify] = ns.args;
   if (delay && delay > 0) {
-    const delayTime = +delay + 50;
+    const delayTime = +delay;
     await ns.sleep(delayTime);
   }
 

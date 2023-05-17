@@ -54,20 +54,20 @@ export async function main(ns: NS): Promise<void> {
     const weakening = weakenAllServers(ns, playerServers, serversToPrep);
     serversBeingWeakened.push(...weakening);
 
-    if (serversBeingWeakened.length > 0) {
-      await ns.sleep(1000);
-      continue;
-    }
+    const serversToGrow = hackableServers.filter((server) =>
+      serversBeingWeakened.every((s) => s !== server)
+    );
 
     const { growing, primed } = growAllServers(
       ns,
       playerServers,
-      hackableServers
+      serversToGrow
     );
+
     serversBeingGrown.push(...growing);
     primedServers = primed;
 
-    if (serversBeingGrown.length > 0) {
+    if (primed.length === 0) {
       await ns.sleep(1000);
       continue;
     }
