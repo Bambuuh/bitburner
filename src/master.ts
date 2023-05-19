@@ -7,7 +7,13 @@ import { getUpdateFromPort } from "./getUpdateFromPort";
 import { getScores } from "./getScores";
 import { batch } from "./batch";
 
+/* 
+With formulas: maxMoney * hackChance / weakenTime
+Without formulas: maxMoney / minSecurity and filter out any result with required hacking more than half your level.
+*/
+
 export async function main(ns: NS): Promise<void> {
+  // const currentDelay = 0;
   const servers = ns.scan();
 
   for (let i = 0; i < servers.length; i++) {
@@ -72,7 +78,7 @@ export async function main(ns: NS): Promise<void> {
       continue;
     }
 
-    const scores = getScores(ns, primedServers);
+    const scores = getScores(ns, primedServers, playerServers);
 
     const noViableTargets = scores.every((s) => s.score < 0);
 
@@ -91,7 +97,7 @@ export async function main(ns: NS): Promise<void> {
     }, scores[0]).server;
 
     if (optimalTarget != lastOptimalTarget) {
-      ns.tprint("Changing target to: ", optimalTarget);
+      ns.tprint("NEW TARGET: ", optimalTarget);
     }
 
     batch(ns, optimalTarget, playerServers);

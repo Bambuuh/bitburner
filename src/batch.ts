@@ -1,8 +1,10 @@
 import { NS } from "@ns";
 import { GROW_SEC, HACK_SEC, WEAKEN_SEC } from "/constants";
 
-export function batch(ns: NS, target: string, playerServer: string[]): void {
+export function batch(ns: NS, target: string, playerServer: string[]): number {
+  const delayMS = 50;
   let delayCounter = 0;
+  let lastDelay = 0;
   for (let i = 0; i < playerServer.length; i++) {
     const server = playerServer[i];
     let ramAvailable = ns.getServerMaxRam(server) - ns.getServerUsedRam(server);
@@ -26,14 +28,18 @@ export function batch(ns: NS, target: string, playerServer: string[]): void {
         const hackCost = hackThreads * hackScriptCost;
         const hackSecurityIncrease = hackThreads * HACK_SEC;
 
-        const hackWeakenThreads = Math.ceil(hackSecurityIncrease / WEAKEN_SEC);
+        const hackWeakenThreads = Math.ceil(
+          (hackSecurityIncrease / WEAKEN_SEC) * 1.1
+        );
         const hackWeakenCost = Math.ceil(weakenScriptCost * hackWeakenThreads);
 
         const growThreads = Math.ceil(ns.growthAnalyze(target, moneyToSteal));
         const growCost = Math.ceil(growScriptCost * growThreads);
         const growSecurityIncrease = growThreads * GROW_SEC;
 
-        const growWeakenThreads = Math.ceil(growSecurityIncrease / WEAKEN_SEC);
+        const growWeakenThreads = Math.ceil(
+          (growSecurityIncrease / WEAKEN_SEC) * 1.1
+        );
         const growWeakenCost = Math.ceil(weakenScriptCost * growWeakenThreads);
 
         const totalCost = Math.ceil(
@@ -41,7 +47,6 @@ export function batch(ns: NS, target: string, playerServer: string[]): void {
         );
 
         if (totalCost < ramAvailable) {
-          const delayMS = 50;
           const batchDelay = delayCounter * (4 * delayMS);
 
           const growTime = ns.getGrowTime(target);
@@ -64,6 +69,13 @@ export function batch(ns: NS, target: string, playerServer: string[]): void {
           const growDelay = Math.ceil(longest - growTimeFinal);
           const weakenHackDelay = Math.ceil(longest - weakenHackTimeFinal);
           const weakenGrowDelay = Math.ceil(longest - weakenGrowTimeFinal);
+
+          lastDelay = Math.max(
+            hackDelay,
+            growDelay,
+            weakenHackDelay,
+            weakenGrowDelay
+          );
 
           if (!ns.fileExists("hack.js", server)) {
             ns.scp("hack.js", server);
@@ -124,4 +136,6 @@ export function batch(ns: NS, target: string, playerServer: string[]): void {
       }
     }
   }
+
+  return Date.now() + lastDelay + delayMS;
 }

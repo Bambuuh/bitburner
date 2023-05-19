@@ -28,7 +28,6 @@ export function weakenAllServers(
       if (usableServer) {
         ns.exec("weaken.js", usableServer, threadsRequired, target, 0, true);
         weakening.push(target);
-        ns.tprint("Prepping ", target);
       }
     }
   }

@@ -56,7 +56,6 @@ export function growAllServers(
         true
       );
       growing.push(target);
-      ns.tprint("Growing ", target);
 
       const usableWeakenServer = playerServers.find(
         (server) =>
@@ -75,7 +74,6 @@ export function growAllServers(
           weakenDelay,
           false
         );
-        ns.tprint("Weakening ", target);
       }
     } else {
       primed.push(target);
