@@ -44,8 +44,8 @@ export async function main(ns: NS): Promise<void> {
 
     tryPurchaseNewServers(ns);
 
-    const playerServers = ns.getPurchasedServers();
-    playerServers.push("home");
+    const playerServers = ["home"];
+    playerServers.push(...ns.getPurchasedServers());
 
     const serversToPrep = hackableServers.filter((server) =>
       serversBeingWeakened.every((s) => s !== server)

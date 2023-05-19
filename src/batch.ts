@@ -15,7 +15,7 @@ export function batch(ns: NS, target: string, playerServer: string[]): void {
     let canBatchMore = true;
 
     while (canBatchMore) {
-      let percentage = 1;
+      let percentage = 0.9;
       let done = false;
 
       while (!done) {
@@ -27,18 +27,20 @@ export function batch(ns: NS, target: string, playerServer: string[]): void {
         const hackSecurityIncrease = hackThreads * HACK_SEC;
 
         const hackWeakenThreads = Math.ceil(hackSecurityIncrease / WEAKEN_SEC);
-        const hackWeakenCost = weakenScriptCost * hackWeakenThreads;
+        const hackWeakenCost = Math.ceil(weakenScriptCost * hackWeakenThreads);
 
         const growThreads = Math.ceil(ns.growthAnalyze(target, moneyToSteal));
-        const growCost = growScriptCost * growThreads;
+        const growCost = Math.ceil(growScriptCost * growThreads);
         const growSecurityIncrease = growThreads * GROW_SEC;
 
         const growWeakenThreads = Math.ceil(growSecurityIncrease / WEAKEN_SEC);
-        const growWeakenCost = weakenScriptCost * growWeakenThreads;
+        const growWeakenCost = Math.ceil(weakenScriptCost * growWeakenThreads);
 
-        const totalCost = hackCost + hackWeakenCost + growCost + growWeakenCost;
+        const totalCost = Math.ceil(
+          hackCost + hackWeakenCost + growCost + growWeakenCost
+        );
 
-        if (totalCost <= ramAvailable) {
+        if (totalCost < ramAvailable) {
           const delayMS = 50;
           const batchDelay = delayCounter * (4 * delayMS);
 
@@ -58,10 +60,16 @@ export function batch(ns: NS, target: string, playerServer: string[]): void {
             weakenGrowTimeFinal
           );
 
-          const hackDelay = longest - hackTimeFinal;
-          const growDelay = longest - growTimeFinal;
-          const weakenHackDelay = longest - weakenHackTimeFinal;
-          const weakenGrowDelay = longest - weakenGrowTimeFinal;
+          const hackDelay = Math.ceil(longest - hackTimeFinal);
+          const growDelay = Math.ceil(longest - growTimeFinal);
+          const weakenHackDelay = Math.ceil(longest - weakenHackTimeFinal);
+          const weakenGrowDelay = Math.ceil(longest - weakenGrowTimeFinal);
+
+          if (!ns.fileExists("hack.js", server)) {
+            ns.scp("hack.js", server);
+            ns.scp("weaken.js", server);
+            ns.scp("grow.js", server);
+          }
 
           ns.exec(
             "hack.js",
