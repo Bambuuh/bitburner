@@ -2,8 +2,8 @@ import { NS } from "@ns";
 import { GROW_SEC, HACK_SEC, WEAKEN_SEC } from "/constants";
 
 export function batch(ns: NS, target: string, playerServer: string[]): void {
+  let delayCounter = 0;
   for (let i = 0; i < playerServer.length; i++) {
-    let delayCounter = 0;
     const server = playerServer[i];
     let ramAvailable = ns.getServerMaxRam(server) - ns.getServerUsedRam(server);
 
