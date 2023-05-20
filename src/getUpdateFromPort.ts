@@ -14,7 +14,6 @@ export function getUpdateFromPort(
       portEmpty = true;
     } else {
       updated = updated.filter((server) => server !== res);
-      ns.tprint("done prepping ", res);
     }
   }
 
