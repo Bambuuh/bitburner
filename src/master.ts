@@ -13,7 +13,7 @@ Without formulas: maxMoney / minSecurity and filter out any result with required
 */
 
 export async function main(ns: NS): Promise<void> {
-  // const currentDelay = 0;
+  let currentDelay = 0;
   const servers = ns.scan();
 
   for (let i = 0; i < servers.length; i++) {
@@ -82,25 +82,29 @@ export async function main(ns: NS): Promise<void> {
 
     const noViableTargets = scores.every((s) => s.score < 0);
 
-    if (noViableTargets) {
+    lastOptimalTarget = optimalTarget;
+    if (noViableTargets && primed.some((s) => s === "n00dles")) {
+      optimalTarget = "n00dles";
+    } else if (scores.length > 0) {
+      optimalTarget = scores.reduce((best, server) => {
+        if (server.score > best.score) {
+          return server;
+        }
+
+        return best;
+      }, scores[0]).server;
+    }
+
+    if (!optimalTarget) {
       await ns.sleep(1000);
       continue;
     }
-
-    lastOptimalTarget = optimalTarget;
-    optimalTarget = scores.reduce((best, server) => {
-      if (server.score > best.score) {
-        return server;
-      }
-
-      return best;
-    }, scores[0]).server;
 
     if (optimalTarget != lastOptimalTarget) {
       ns.tprint("NEW TARGET: ", optimalTarget);
     }
 
-    batch(ns, optimalTarget, playerServers);
+    currentDelay = batch(ns, optimalTarget, playerServers, currentDelay);
 
     await ns.sleep(1000);
   }

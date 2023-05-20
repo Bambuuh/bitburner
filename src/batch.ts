@@ -1,10 +1,17 @@
 import { NS } from "@ns";
 import { GROW_SEC, HACK_SEC, WEAKEN_SEC } from "/constants";
 
-export function batch(ns: NS, target: string, playerServer: string[]): number {
-  const delayMS = 50;
+export function batch(
+  ns: NS,
+  target: string,
+  playerServer: string[],
+  currentDelay: number
+): number {
+  const initialDelay = currentDelay - Date.now();
+  const delayMS = 100;
   let delayCounter = 0;
-  let lastDelay = 0;
+
+  let lastDelay = Math.max(0, initialDelay);
   for (let i = 0; i < playerServer.length; i++) {
     const server = playerServer[i];
     let ramAvailable = ns.getServerMaxRam(server) - ns.getServerUsedRam(server);
@@ -22,6 +29,11 @@ export function batch(ns: NS, target: string, playerServer: string[]): number {
 
       while (!done) {
         const moneyToSteal = Math.floor(money * percentage);
+
+        if (moneyToSteal === 0) {
+          return;
+        }
+
         const hackThreads = Math.ceil(
           ns.hackAnalyzeThreads(target, moneyToSteal)
         );
@@ -129,7 +141,7 @@ export function batch(ns: NS, target: string, playerServer: string[]): number {
           }
         }
 
-        if (percentage <= 0) {
+        if (percentage <= 0.005) {
           done = true;
           canBatchMore = false;
         }
