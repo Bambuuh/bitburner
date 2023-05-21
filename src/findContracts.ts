@@ -1,16 +1,46 @@
 import { NS } from "@ns";
 import { findLargestFactor } from "./contracts/findLargestPrime";
+import { compressionOne } from "./contracts/compressionOne";
+
+function solve(
+  ns: NS,
+  type: string,
+  data: any,
+  filename: string,
+  server: string
+) {
+  let res: any = undefined;
+  switch (type) {
+    case "Find Largest Prime Factor":
+      res = findLargestFactor(data);
+      break;
+    case "Compression I: RLE Compression":
+      res = compressionOne(data);
+      break;
+    default:
+      res = undefined;
+  }
+  if (res) {
+    return ns.codingcontract.attempt(res, filename, server);
+  }
+
+  return "nope";
+}
 
 function trySolveContract(ns: NS, filename: string, server: string): void {
   const type = ns.codingcontract.getContractType(filename, server);
-  if (type === "Find Largest Prime Factor") {
-    const data = ns.codingcontract.getData(filename, server);
-    const factor = findLargestFactor(data);
-    const res = ns.codingcontract.attempt(factor, filename, server);
-
-    if (res.length > 0) {
-      ns.tprint("solved contract");
-    }
+  ns.tprint("========== CONTRACT ==========");
+  ns.tprint(server);
+  ns.tprint(type);
+  ns.tprint("===============================");
+  const data = ns.codingcontract.getData(filename, server);
+  const res = solve(ns, type, data, filename, server);
+  if (res === "nope") {
+    ns.tprint("no contracts to solve");
+  } else if (res.length > 0) {
+    ns.tprint("SOLVED contract: ", filename, " on ", server);
+  } else {
+    ns.tprint("FAILED contract: ", filename, " on ", server);
   }
 }
 

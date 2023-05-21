@@ -1,5 +1,6 @@
 import { NS } from "@ns";
 import { GROW_SEC, HACK_SEC, WEAKEN_SEC } from "/constants";
+import { isAnyZero } from "/utils/isZero";
 
 export function batch(
   ns: NS,
@@ -8,7 +9,7 @@ export function batch(
   currentDelay: number
 ): number {
   const initialDelay = currentDelay - Date.now();
-  const delayMS = 100;
+  const delayMS = 50;
   let delayCounter = 0;
 
   let lastDelay = Math.max(0, initialDelay);
@@ -31,7 +32,7 @@ export function batch(
         const moneyToSteal = Math.floor(money * percentage);
 
         if (moneyToSteal === 0) {
-          return;
+          return currentDelay;
         }
 
         const hackThreads = Math.ceil(
@@ -93,6 +94,17 @@ export function batch(
             ns.scp("hack.js", server);
             ns.scp("weaken.js", server);
             ns.scp("grow.js", server);
+          }
+
+          if (
+            isAnyZero(
+              hackThreads,
+              hackWeakenThreads,
+              growThreads,
+              growWeakenThreads
+            )
+          ) {
+            return currentDelay;
           }
 
           ns.exec(

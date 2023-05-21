@@ -16,7 +16,21 @@ export function getScores(
   const weakenScriptCost = ns.getScriptRam("weaken.js");
   const growScriptCost = ns.getScriptRam("grow.js");
 
-  const smallestServer = playerServers.reduce(
+  let serversToCheck = playerServers;
+
+  const homeRam = ns.getServerMaxRam("home");
+  const isHomeSmallest = playerServers
+    .filter((s) => s !== "home")
+    .every((s) => {
+      const ram = ns.getServerMaxRam(s);
+      return homeRam < ram;
+    });
+
+  if (isHomeSmallest) {
+    serversToCheck = playerServers.filter((s) => s !== "home");
+  }
+
+  const smallestServer = serversToCheck.reduce(
     (smallest, server) => {
       const maxRam = ns.getServerMaxRam(server);
       if (maxRam < smallest.maxRam) {
@@ -30,7 +44,7 @@ export function getScores(
   targets.forEach((t) => {
     const maxMoney = ns.getServerMaxMoney(t);
 
-    const moneyToSteal = Math.floor(maxMoney * 0.001);
+    const moneyToSteal = Math.floor(maxMoney * 0.005);
 
     if (moneyToSteal > 1) {
       const hackThreads = Math.ceil(ns.hackAnalyzeThreads(t, moneyToSteal));

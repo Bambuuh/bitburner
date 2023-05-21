@@ -1,5 +1,6 @@
 import { NS } from "@ns";
 import { GROW_SEC, WEAKEN_SEC } from "./constants";
+import { isAnyZero } from "./utils/isZero";
 
 export function growAllServers(
   ns: NS,
@@ -17,63 +18,67 @@ export function growAllServers(
     if (currMoney < maxMoney) {
       const missingMoneyFactor =
         currMoney === 0 ? maxMoney : maxMoney / currMoney;
-      const growThreadsRequired = Math.ceil(
+      const totalGrowThreads = Math.ceil(
         ns.growthAnalyze(target, missingMoneyFactor)
       );
 
-      const securityChange = growThreadsRequired * GROW_SEC;
-      const weakenThreadsRequired = Math.ceil(securityChange / WEAKEN_SEC);
+      let growThreadsRemaining = totalGrowThreads;
+      for (let i = 0; i < playerServers.length; i++) {
+        if (growThreadsRemaining === 0) {
+          break;
+        }
+        const server = playerServers[i];
+        let growThreads = growThreadsRemaining;
+        let counter = 0;
 
-      const growCost = ns.getScriptRam("grow.js");
-      const totalGrowCost = growThreadsRequired * growCost;
+        let done = false;
+        while (!done) {
+          const securityChange = growThreads * GROW_SEC;
+          const weakenThreadsRequired = Math.ceil(securityChange / WEAKEN_SEC);
 
-      const weakenCost = ns.getScriptRam("weaken.js");
-      const totalWeakenCost = weakenThreadsRequired * weakenCost;
+          const growCost = ns.getScriptRam("grow.js");
+          const totalGrowCost = totalGrowThreads * growCost;
 
-      const usableGrowServer = playerServers.find(
-        (server) =>
-          ns.getServerMaxRam(server) - ns.getServerUsedRam(server) >
-          totalGrowCost
-      );
+          const weakenCost = ns.getScriptRam("weaken.js");
+          const totalWeakenCost = weakenThreadsRequired * weakenCost;
 
-      if (!usableGrowServer) {
-        continue;
-      }
+          const totalCost = Math.ceil(totalGrowCost + totalWeakenCost);
+          const availableRam =
+            ns.getServerMaxRam(server) - ns.getServerUsedRam(server);
 
-      const growTime = ns.getGrowTime(target);
-      const weakenTime = ns.getWeakenTime(target);
+          if (totalCost > availableRam) {
+            counter++;
+            growThreads = Math.ceil(growThreadsRemaining * (1 - 0.1 * counter));
+            if (growThreads <= 0) {
+              done = true;
+            }
+            continue;
+          }
 
-      const longest = Math.max(growTime, weakenTime);
-      const shortest = Math.min(growTime, weakenTime);
-      const delay = longest - shortest;
+          const growTime = ns.getGrowTime(target);
+          const weakenTime = ns.getWeakenTime(target);
 
-      ns.exec(
-        "grow.js",
-        usableGrowServer,
-        growThreadsRequired,
-        target,
-        0,
-        true
-      );
-      growing.push(target);
+          const longest = Math.max(growTime, weakenTime);
 
-      const usableWeakenServer = playerServers.find(
-        (server) =>
-          ns.getServerMaxRam(server) - ns.getServerUsedRam(server) >
-          totalWeakenCost
-      );
+          const growDelay = Math.ceil(longest - growTime);
+          const weakenDelay = Math.ceil(longest - weakenTime);
 
-      if (usableWeakenServer) {
-        const weakenDelay = weakenTime < growTime ? delay : 0;
+          const isZero = isAnyZero(weakenThreadsRequired, growThreadsRemaining);
 
-        ns.exec(
-          "weaken.js",
-          usableWeakenServer,
-          weakenThreadsRequired,
-          target,
-          weakenDelay,
-          false
-        );
+          ns.exec("grow.js", server, totalGrowThreads, target, growDelay, true);
+
+          ns.exec(
+            "weaken.js",
+            server,
+            weakenThreadsRequired,
+            target,
+            weakenDelay,
+            false
+          );
+
+          growThreadsRemaining -= growThreads;
+          done = true;
+        }
       }
     } else {
       primed.push(target);
