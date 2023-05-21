@@ -63,8 +63,6 @@ export function growAllServers(
           const growDelay = Math.ceil(longest - growTime);
           const weakenDelay = Math.ceil(longest - weakenTime);
 
-          const isZero = isAnyZero(weakenThreadsRequired, growThreadsRemaining);
-
           ns.exec("grow.js", server, totalGrowThreads, target, growDelay, true);
 
           ns.exec(

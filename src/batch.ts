@@ -60,7 +60,7 @@ export function batch(
         );
 
         if (totalCost < ramAvailable) {
-          const batchDelay = delayCounter * (4 * delayMS);
+          const batchDelay = delayCounter * delayMS;
 
           const growTime = ns.getGrowTime(target);
           const weakenTime = ns.getWeakenTime(target);

@@ -10,6 +10,7 @@ export function tryNukeNewServers(ns: NS, servers: string[]): string[] {
   const hasFtpCrack = ns.fileExists("FTPCrack.exe");
   const hasHttpWorm = ns.fileExists("HTTPWorm.exe");
   const hasRelaySmtp = ns.fileExists("relaySMTP.exe");
+  const hasSqlInject = ns.fileExists("SQLInject.exe");
 
   if (hasBrute) {
     portsAvailable.push("BruteSSH.exe");
@@ -25,6 +26,10 @@ export function tryNukeNewServers(ns: NS, servers: string[]): string[] {
 
   if (hasRelaySmtp) {
     portsAvailable.push("relaySMTP.exe");
+  }
+
+  if (hasSqlInject) {
+    portsAvailable.push("SQLInject.exe");
   }
 
   servers.forEach((server) => {
@@ -46,6 +51,10 @@ export function tryNukeNewServers(ns: NS, servers: string[]): string[] {
       if (hasRelaySmtp) {
         ns.relaysmtp(server);
       }
+      if (hasSqlInject) {
+        ns.sqlinject(server);
+      }
+
       ns.nuke(server);
       ns.tprint("Nuked ", server);
       nuked.push(server);
