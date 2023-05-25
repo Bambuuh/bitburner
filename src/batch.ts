@@ -35,7 +35,7 @@ export function batch(
           return currentDelay;
         }
 
-        const hackThreads = Math.ceil(
+        const hackThreads = Math.floor(
           ns.hackAnalyzeThreads(target, moneyToSteal)
         );
         const hackCost = hackThreads * hackScriptCost;
@@ -153,7 +153,7 @@ export function batch(
           }
         }
 
-        if (percentage <= 0.005) {
+        if (percentage < 0.001) {
           done = true;
           canBatchMore = false;
         }
