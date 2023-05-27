@@ -37,7 +37,7 @@ export async function main(ns: NS): Promise<void> {
 
   let serversBeingWeakened: string[] = [];
   let serversBeingGrown: string[] = [];
-  let primedServers: string[] = [];
+  const primedServers: string[] = [];
   while (true) {
     const updatedWeakening = getUpdateFromPort(ns, serversBeingWeakened, 1);
     const updatedGrowing = getUpdateFromPort(ns, serversBeingWeakened, 2);
@@ -53,15 +53,19 @@ export async function main(ns: NS): Promise<void> {
     const playerServers = ["home"];
     playerServers.push(...ns.getPurchasedServers());
 
-    const serversToPrep = hackableServers.filter((server) =>
-      serversBeingWeakened.every((s) => s !== server)
+    const serversToWeaken = hackableServers.filter(
+      (server) =>
+        serversBeingWeakened.every((s) => s !== server) &&
+        primedServers.every((s) => s !== server)
     );
 
-    const weakening = weakenAllServers(ns, playerServers, serversToPrep);
+    const weakening = weakenAllServers(ns, playerServers, serversToWeaken);
     serversBeingWeakened.push(...weakening);
 
-    const serversToGrow = hackableServers.filter((server) =>
-      serversBeingWeakened.every((s) => s !== server)
+    const serversToGrow = hackableServers.filter(
+      (server) =>
+        serversBeingWeakened.every((s) => s !== server) &&
+        primedServers.every((s) => s !== server)
     );
 
     const { growing, primed } = growAllServers(
@@ -71,9 +75,9 @@ export async function main(ns: NS): Promise<void> {
     );
 
     serversBeingGrown.push(...growing);
-    primedServers = primed;
+    primedServers.push(...primed);
 
-    if (primed.length === 0) {
+    if (primedServers.length === 0) {
       await ns.sleep(1000);
       continue;
     }
@@ -83,7 +87,7 @@ export async function main(ns: NS): Promise<void> {
     const noViableTargets = scores.every((s) => s.score < 0);
 
     lastOptimalTarget = optimalTarget;
-    if (noViableTargets && primed.some((s) => s === "n00dles")) {
+    if (noViableTargets && primedServers.some((s) => s === "n00dles")) {
       optimalTarget = "n00dles";
     } else if (scores.length > 0) {
       optimalTarget = scores.reduce((best, server) => {
