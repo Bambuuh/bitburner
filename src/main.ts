@@ -1,11 +1,16 @@
 import { NS } from "@ns";
 
 export async function main(ns: NS): Promise<void> {
+  // ns.run("spider.js");
+
   const target = "n00dles";
 
-  while (true) {
-    ns.run("spider.js");
+  // ns.run("purchaseServers.js");
+  // ns.run("upgradeServers.js");
 
+  await prepTarget(target);
+
+  while (true) {
     const security = ns.getServerSecurityLevel(target);
     const minSecurity = ns.getServerMinSecurityLevel(target);
     const maxRam = ns.getServerMaxRam("home");
@@ -24,7 +29,7 @@ export async function main(ns: NS): Promise<void> {
     const money = ns.getServerMoneyAvailable(target);
     const maxMoney = ns.getServerMaxMoney(target);
 
-    if (money < maxMoney) {
+    if (money < maxMoney * 0.75) {
       const growRam = ns.getScriptRam("grow.js");
       const growTime = ns.getGrowTime(target);
       const threads = Math.floor(available / growRam);
@@ -43,5 +48,43 @@ export async function main(ns: NS): Promise<void> {
     }
 
     await ns.sleep(200);
+  }
+
+  async function prepTarget(target: string) {
+    let isPrepped = false;
+    ns.tprint(`Prepping ${target}`);
+
+    while (!isPrepped) {
+      const security = ns.getServerSecurityLevel(target);
+      const minSecurity = ns.getServerMinSecurityLevel(target);
+      const maxRam = ns.getServerMaxRam("home");
+      const usedRam = ns.getServerUsedRam("home");
+      const available = maxRam - usedRam;
+
+      if (security > minSecurity) {
+        const weakenRam = ns.getScriptRam("weaken.js");
+        const weakenTime = ns.getWeakenTime(target);
+        const threads = Math.floor(available / weakenRam);
+        ns.run("weaken.js", { threads }, target);
+        await ns.sleep(weakenTime + 100);
+        continue;
+      }
+
+      const money = ns.getServerMoneyAvailable(target);
+      const maxMoney = ns.getServerMaxMoney(target);
+
+      if (money < maxMoney) {
+        const growRam = ns.getScriptRam("grow.js");
+        const growTime = ns.getGrowTime(target);
+        const threads = Math.floor(available / growRam);
+        ns.run("grow.js", { threads }, target);
+        await ns.sleep(growTime + 100);
+        continue;
+      }
+
+      isPrepped = true;
+    }
+
+    ns.tprint(`${target} is prepped`);
   }
 }

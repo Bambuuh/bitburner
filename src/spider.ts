@@ -19,8 +19,4 @@ export async function main(ns: NS): Promise<void> {
       }
     }
   });
-
-  ns.tprint("available servers");
-  const availableServers = servers.filter((server) => ns.hasRootAccess(server));
-  ns.tprint(availableServers);
 }
