@@ -4,13 +4,15 @@ export async function main(ns: NS): Promise<void> {
   const target = "n00dles";
 
   while (true) {
+    ns.run("spider.js");
+
     const security = ns.getServerSecurityLevel(target);
     const minSecurity = ns.getServerMinSecurityLevel(target);
     const maxRam = ns.getServerMaxRam("home");
     const usedRam = ns.getServerUsedRam("home");
     const available = maxRam - usedRam;
 
-    if (security > minSecurity) {
+    if (security > minSecurity + 1) {
       const weakenRam = ns.getScriptRam("weaken.js");
       const weakenTime = ns.getWeakenTime(target);
       const threads = Math.floor(available / weakenRam);
@@ -34,7 +36,12 @@ export async function main(ns: NS): Promise<void> {
     const hackRam = ns.getScriptRam("hack.js");
     const hackTime = ns.getHackTime(target);
     const threads = Math.floor(available / hackRam);
-    ns.run("hack.js", { threads }, target);
-    await ns.sleep(hackTime + 100);
+    if (threads > 0) {
+      ns.run("hack.js", { threads }, target);
+      await ns.sleep(hackTime + 100);
+      continue;
+    }
+
+    await ns.sleep(200);
   }
 }
