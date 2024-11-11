@@ -4,7 +4,8 @@ import { getHackingValue } from "/utils/getHackingValue";
 import { getHackableServers } from "/utils/getHackableServers";
 import { getServersToPrep } from "/utils/getServersToPrep";
 import { batchHack } from "/batch/batchHack";
-import { batchPrepp } from "./batch/batchPrep";
+import { batchPrepp } from "/batch/batchPrep";
+import { purchaseServers } from "/purchaseServers";
 
 type ValueServer = {
   name: string;
@@ -18,8 +19,8 @@ export async function main(ns: NS): Promise<void> {
   const batchInterval = 200;
 
   while (true) {
+    purchaseServers(ns);
     const hackableServers = getHackableServers(ns);
-
     const serversToCheck = hackableServers.filter(
       (server) =>
         server !== "home" &&
