@@ -1,9 +1,13 @@
 import { NS } from "@ns";
+// import { getHackableServers } from "/utils/findServers";
 
 export async function main(ns: NS): Promise<void> {
   const target = "n00dles"; // Target server
   const hackPercentage = 0.1; // Fraction of money to hack per batch
   const batchInterval = 200; // Delay between starting each batch (in milliseconds)
+
+  // const hackableServers = getHackableServers(ns);
+  // ns.tprint(hackableServers);
 
   while (true) {
     batch(ns, target, hackPercentage);
