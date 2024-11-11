@@ -10,10 +10,13 @@ export function purchaseServers(ns: NS) {
 
   if (serverCount < serverLimit) {
     while (money > newServerCost && serverCount < serverLimit) {
-      ns.purchaseServer(`server-${servers.length.toString()}`, 64);
-      serverCount++;
-      ns.tprint(`Purchased new server, new count ${serverCount}`);
-      money -= newServerCost;
+      const name = ns.purchaseServer(`server-${servers.length.toString()}`, 64);
+      if (name) {
+        addScripts(ns, name);
+        serverCount++;
+        ns.tprint(`Purchased new server, new count ${serverCount}`);
+        money -= newServerCost;
+      }
     }
   } else {
     servers.forEach((server) => {
@@ -23,5 +26,16 @@ export function purchaseServers(ns: NS) {
         ns.tprint(`Upgraded ${server} to ${maxRam * 2} RAM`);
       }
     });
+  }
+}
+
+export function addScripts(ns: NS, server: string) {
+  const scripts = ["hack.js", "grow.js", "weaken.js"];
+
+  for (const script of scripts) {
+    // Copy the script to each server
+    if (!ns.fileExists(script, server)) {
+      ns.scp(script, server);
+    }
   }
 }

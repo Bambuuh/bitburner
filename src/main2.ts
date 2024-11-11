@@ -17,6 +17,7 @@ export async function main(ns: NS): Promise<void> {
   const serversBeingPrepped: { target: string; TTL: number }[] = [];
   const hackPercentage = 0.1;
   const batchInterval = 200;
+  setupScripts(ns);
 
   while (true) {
     purchaseServers(ns);
@@ -77,5 +78,18 @@ export async function main(ns: NS): Promise<void> {
       }
     }
     await ns.sleep(batchInterval);
+  }
+}
+
+export function setupScripts(ns: NS) {
+  const servers = ns.getPurchasedServers();
+  const scripts = ["hack.js", "grow.js", "weaken.js"];
+
+  for (const server of servers) {
+    for (const script of scripts) {
+      if (!ns.fileExists(script, server)) {
+        ns.scp(script, server);
+      }
+    }
   }
 }
