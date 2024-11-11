@@ -20,26 +20,36 @@ export async function batchHack(
   const serverMaxMoney = ns.getServerMaxMoney(target);
   const moneyToHack = serverMaxMoney * hackPercentage;
   const hackThreads = Math.floor(ns.hackAnalyzeThreads(target, moneyToHack));
-  const growThreads = Math.ceil(
-    ns.growthAnalyze(target, serverMaxMoney / (serverMaxMoney - moneyToHack))
-  );
-  const weakenThreadsHack = Math.ceil((hackThreads * 0.002) / 0.05); // 0.002 sec increase per hack thread, 0.05 reduction per weaken thread
-  const weakenThreadsGrow = Math.ceil((growThreads * 0.004) / 0.05); // 0.004 sec increase per grow thread, 0.05 reduction per weaken thread
 
-  const delayHack = weakenTime - hackTime;
-  const delayGrow = weakenTime - growTime;
-  const delayWeaken = 0;
+  const postHackMoney = serverMaxMoney - moneyToHack;
+
+  const growThreads = Math.ceil(
+    ns.growthAnalyze(target, serverMaxMoney / postHackMoney)
+  );
+
+  const hackSecurityIncrease = ns.hackAnalyzeSecurity(hackThreads);
+  const growSecurityIncrease = ns.growthAnalyzeSecurity(growThreads);
+
+  const weakenThreadsHack = Math.ceil(hackSecurityIncrease / 0.05); // 0.05 reduction per weaken thread
+  const weakenThreadsGrow = Math.ceil(growSecurityIncrease / 0.05);
+
+  const addedDelay = 20;
+  const delayHack = weakenTime - hackTime + addedDelay;
+  const delayGrow = weakenTime - growTime + addedDelay;
+  const delayWeakenHack = addedDelay;
+  const delayWeakenGrow = delayGrow + addedDelay;
 
   const totalRam = ns.getServerMaxRam("home");
   const usedRam = ns.getServerUsedRam("home");
   const availableRam = totalRam - usedRam;
+
   const hackCost = ns.getScriptRam(hackScript);
   const growCost = ns.getScriptRam(growScript);
   const weakenCost = ns.getScriptRam(weakenScript);
   const totalCost =
     hackCost * hackThreads +
     growCost * growThreads +
-    weakenCost * (weakenThreadsGrow + weakenThreadsHack);
+    weakenCost * (weakenThreadsHack + weakenThreadsGrow);
 
   if (totalCost > availableRam) {
     batchHack(ns, target, hackPercentage - 0.01);
@@ -58,7 +68,7 @@ export async function batchHack(
       "home",
       weakenThreadsHack,
       target,
-      delayWeaken,
+      delayWeakenHack,
       Date.now()
     );
   }
@@ -68,7 +78,7 @@ export async function batchHack(
       "home",
       weakenThreadsGrow,
       target,
-      delayWeaken,
+      delayWeakenGrow,
       Date.now()
     );
   }

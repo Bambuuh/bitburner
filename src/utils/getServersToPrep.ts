@@ -5,9 +5,7 @@ export function getServersToPrep(ns: NS, servers: string[]) {
     const isMinSec =
       ns.getServerMinSecurityLevel(server) ===
       ns.getServerSecurityLevel(server);
-    const isMaxMoney =
-      ns.getServerMaxMoney(server) === ns.getServerMoneyAvailable(server);
 
-    return !isMinSec || !isMaxMoney;
+    return !isMinSec;
   });
 }

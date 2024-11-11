@@ -12,7 +12,7 @@ type ValueServer = {
 };
 
 export async function main(ns: NS): Promise<void> {
-  let target: string | undefined = undefined;
+  let target: { server: string; hackChance: number } | undefined = undefined;
   const serversBeingPrepped: { target: string; TTL: number }[] = [];
   const hackPercentage = 0.1;
   const batchInterval = 200;
@@ -20,12 +20,10 @@ export async function main(ns: NS): Promise<void> {
   while (true) {
     const hackableServers = getHackableServers(ns);
 
-    ns.tprint(serversBeingPrepped, " ", Date.now());
-
     const serversToCheck = hackableServers.filter(
       (server) =>
         server !== "home" &&
-        server !== target &&
+        server !== target?.server &&
         serversBeingPrepped.every((prep) => prep.target !== server)
     );
 
@@ -34,7 +32,6 @@ export async function main(ns: NS): Promise<void> {
     serversToPrep.forEach((server) => {
       const newPreppServer = batchPrepp(ns, server);
       if (newPreppServer) {
-        ns.tprint(`Prepping ${server}`);
         const index = serversBeingPrepped.push(newPreppServer);
         setTimeout(() => {
           serversBeingPrepped.splice(index - 1, 1);
@@ -42,12 +39,13 @@ export async function main(ns: NS): Promise<void> {
       }
     });
 
-    ns.tprint("prepping", " ", serversBeingPrepped);
-
     if (serversBeingPrepped.length === 0) {
+      if (target) {
+        serversToCheck.push(target.server);
+      }
       serversToCheck.map((server) => ({
         name: server,
-        value: getHackingValue(ns, server),
+        value: getHackingValue(ns, server, target),
       }));
 
       const mostValuedServer = serversToCheck.reduce<ValueServer | undefined>(
@@ -61,15 +59,20 @@ export async function main(ns: NS): Promise<void> {
         undefined
       );
 
-      if (mostValuedServer?.name !== target) {
+      if (
+        mostValuedServer &&
+        ((mostValuedServer?.name && !target) ||
+          mostValuedServer.name !== target?.server)
+      ) {
         ns.tprint(`Targeting ${mostValuedServer?.name}`);
+        target = {
+          hackChance: ns.hackAnalyzeChance(mostValuedServer?.name),
+          server: mostValuedServer?.name,
+        };
       }
 
-      target = mostValuedServer?.name;
-
       if (target) {
-        ns.tprint(`Hacking ${mostValuedServer?.name}`);
-        batchHack(ns, target, hackPercentage);
+        batchHack(ns, target.server, hackPercentage);
       }
     }
     await ns.sleep(batchInterval);
