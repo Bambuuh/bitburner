@@ -1,28 +1,17 @@
 import { NS } from "@ns";
-// import { getHackableServers } from "/utils/findServers";
 
-export async function main(ns: NS): Promise<void> {
-  const target = "n00dles"; // Target server
-  const hackPercentage = 0.1; // Fraction of money to hack per batch
-  const batchInterval = 200; // Delay between starting each batch (in milliseconds)
-
-  // const hackableServers = getHackableServers(ns);
-  // ns.tprint(hackableServers);
-
-  while (true) {
-    batch(ns, target, hackPercentage);
-    await ns.sleep(batchInterval); // Start the next batch after a small interval
-  }
-}
-
-async function batch(ns: NS, target: string, hackPercentage: number) {
+export async function batchHack(
+  ns: NS,
+  target: string,
+  hackPercentage: number
+) {
   if (hackPercentage <= 0.01) {
     return;
   }
 
-  const hackScript = "hack2.js";
-  const growScript = "grow2.js";
-  const weakenScript = "weaken2.js";
+  const hackScript = "hack.js";
+  const growScript = "grow.js";
+  const weakenScript = "weaken.js";
 
   const hackTime = ns.getHackTime(target);
   const growTime = ns.getGrowTime(target);
@@ -53,7 +42,7 @@ async function batch(ns: NS, target: string, hackPercentage: number) {
     weakenCost * (weakenThreadsGrow + weakenThreadsHack);
 
   if (totalCost > availableRam) {
-    batch(ns, target, hackPercentage - 0.01);
+    batchHack(ns, target, hackPercentage - 0.01);
     return;
   }
 
