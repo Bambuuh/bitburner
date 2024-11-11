@@ -7,6 +7,10 @@ export function getHackableServers(ns: NS) {
   const player = ns.getPlayer();
 
   const hasBrute = ns.fileExists("BruteSSH.exe", "home");
+  const hasFTP = ns.fileExists("FTPCrack.exe", "home");
+  const hasWorm = ns.fileExists("HTTPWorm.exe", "home");
+  const hasRelay = ns.fileExists("relaySMTP.exe", "home");
+  const hasSQL = ns.fileExists("SQLInject.exe", "home");
 
   while (serversToScan.length > 0) {
     const server = serversToScan.pop();
@@ -27,6 +31,26 @@ export function getHackableServers(ns: NS) {
 
           if (hasBrute) {
             ns.brutessh(server);
+            closedPorts -= 1;
+          }
+
+          if (hasFTP) {
+            ns.ftpcrack(server);
+            closedPorts -= 1;
+          }
+
+          if (hasWorm) {
+            ns.httpworm(server);
+            closedPorts -= 1;
+          }
+
+          if (hasRelay) {
+            ns.relaysmtp(server);
+            closedPorts -= 1;
+          }
+
+          if (hasSQL) {
+            ns.sqlinject(server);
             closedPorts -= 1;
           }
 

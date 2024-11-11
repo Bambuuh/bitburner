@@ -15,8 +15,7 @@ type ValueServer = {
 export async function main(ns: NS): Promise<void> {
   let target: { server: string; hackChance: number } | undefined = undefined;
   const serversBeingPrepped: { target: string; TTL: number }[] = [];
-  const hackPercentage = 0.1;
-  const batchInterval = 200;
+  const batchInterval = 50;
   setupScripts(ns);
 
   while (true) {
@@ -74,6 +73,12 @@ export async function main(ns: NS): Promise<void> {
       }
 
       if (target) {
+        const optimalHackPercentage = Math.min(
+          0.5,
+          ns.hackAnalyze(target.server) / 2
+        );
+        const hackPercentage = Math.max(0.2, optimalHackPercentage); // Set a minimum to ensure continuous hacking
+
         batchHack(ns, target.server, hackPercentage);
       }
     }

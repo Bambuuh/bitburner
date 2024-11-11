@@ -32,7 +32,7 @@ export async function batchHack(
   const weakenThreadsHack = Math.ceil(hackSecurityIncrease / 0.05);
   const weakenThreadsGrow = Math.ceil(growSecurityIncrease / 0.05);
 
-  const addedDelay = 20;
+  const addedDelay = 10;
   const delayHack = weakenTime - hackTime + addedDelay;
   const delayGrow = weakenTime - growTime + addedDelay;
   const delayWeakenHack = addedDelay;
