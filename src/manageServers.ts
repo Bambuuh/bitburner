@@ -1,6 +1,6 @@
 import { NS } from "@ns";
 
-export function purchaseServers(ns: NS) {
+export function manageServers(ns: NS) {
   const servers = ns.getPurchasedServers();
   const player = ns.getPlayer();
   const newServerCost = ns.getPurchasedServerCost(64);
@@ -9,7 +9,7 @@ export function purchaseServers(ns: NS) {
   let serverCount = servers.length;
 
   if (serverCount < serverLimit) {
-    while (money > newServerCost && serverCount < serverLimit) {
+    while (money >= newServerCost && serverCount < serverLimit) {
       const name = ns.purchaseServer(`server-${servers.length.toString()}`, 64);
       if (name) {
         addScripts(ns, name);
@@ -33,7 +33,6 @@ export function addScripts(ns: NS, server: string) {
   const scripts = ["hack.js", "grow.js", "weaken.js"];
 
   for (const script of scripts) {
-    // Copy the script to each server
     if (!ns.fileExists(script, server)) {
       ns.scp(script, server);
     }

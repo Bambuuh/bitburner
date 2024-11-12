@@ -38,11 +38,9 @@ export async function batchHack(
   const delayWeakenHack = addedDelay;
   const delayWeakenGrow = delayGrow + addedDelay;
 
-  // List all servers (not including "home" for task allocation)
   const servers = ns.getPurchasedServers();
   const availableServers = ["home", ...servers];
 
-  // Calculate total threads needed and the total RAM required
   const hackCost = ns.getScriptRam(hackScript);
   const growCost = ns.getScriptRam(growScript);
   const weakenCost = ns.getScriptRam(weakenScript);
@@ -52,7 +50,6 @@ export async function batchHack(
     growCost * growThreads +
     weakenCost * (weakenThreadsHack + weakenThreadsGrow);
 
-  // Check if available RAM is sufficient on home and purchased servers
   const remainingThreads = {
     hackThreads,
     growThreads,

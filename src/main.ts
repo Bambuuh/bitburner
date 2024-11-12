@@ -5,11 +5,14 @@ import { getHackableServers } from "/utils/getHackableServers";
 import { getServersToPrep } from "/utils/getServersToPrep";
 import { batchHack } from "/batch/batchHack";
 import { batchPrepp } from "/batch/batchPrep";
-import { purchaseServers } from "/purchaseServers";
+import { manageServers } from "./manageServers";
 
 type ValueServer = {
   name: string;
-  value: number;
+  hackingValue: {
+    value: number;
+    requiredRam: number;
+  };
 };
 
 export async function main(ns: NS): Promise<void> {
@@ -19,7 +22,7 @@ export async function main(ns: NS): Promise<void> {
   setupScripts(ns);
 
   while (true) {
-    purchaseServers(ns);
+    manageServers(ns);
     const hackableServers = getHackableServers(ns);
     const serversToCheck = hackableServers.filter(
       (server) =>
@@ -44,16 +47,20 @@ export async function main(ns: NS): Promise<void> {
       if (target) {
         serversToCheck.push(target.server);
       }
-      serversToCheck.map((server) => ({
+      const valueServers = serversToCheck.map((server) => ({
         name: server,
-        value: getHackingValue(ns, server, target),
+        hackingValue: getHackingValue(ns, server, target),
       }));
 
-      const mostValuedServer = serversToCheck.reduce<ValueServer | undefined>(
+      const maxRam = getMaxAvailableRam(ns);
+      const mostValuedServer = valueServers.reduce<ValueServer | undefined>(
         (best, server) => {
-          const value = getHackingValue(ns, server);
-          if (!best?.value || best.value < value) {
-            return { name: server, value };
+          if (
+            !best ||
+            (best.hackingValue.value < server.hackingValue.value &&
+              server.hackingValue.requiredRam <= maxRam)
+          ) {
+            return server;
           }
           return best;
         },
@@ -86,7 +93,7 @@ export async function main(ns: NS): Promise<void> {
   }
 }
 
-export function setupScripts(ns: NS) {
+function setupScripts(ns: NS) {
   const servers = ns.getPurchasedServers();
   const scripts = ["hack.js", "grow.js", "weaken.js"];
 
@@ -97,4 +104,14 @@ export function setupScripts(ns: NS) {
       }
     }
   }
+}
+
+function getMaxAvailableRam(ns: NS) {
+  const purchasedServers = ns.getPurchasedServers();
+  const homeRam = ns.getServerMaxRam("home");
+  const maxPurchased = purchasedServers.reduce(
+    (max, server) => Math.min(max, ns.getServerMaxRam(server)),
+    Infinity
+  );
+  return Math.max(homeRam, maxPurchased);
 }
