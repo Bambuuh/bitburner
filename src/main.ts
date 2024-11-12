@@ -84,7 +84,7 @@ export async function main(ns: NS): Promise<void> {
           0.5,
           ns.hackAnalyze(target.server) / 2
         );
-        const hackPercentage = Math.max(0.2, optimalHackPercentage); // Set a minimum to ensure continuous hacking
+        const hackPercentage = Math.max(0.1, optimalHackPercentage); // Set a minimum to ensure continuous hacking
 
         batchHack(ns, target.server, hackPercentage);
       }
