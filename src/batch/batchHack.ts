@@ -32,11 +32,11 @@ export async function batchHack(
   const weakenThreadsHack = Math.ceil(hackSecurityIncrease / 0.05);
   const weakenThreadsGrow = Math.ceil(growSecurityIncrease / 0.05);
 
-  const addedDelay = 10;
-  const delayHack = weakenTime - hackTime + addedDelay;
-  const delayGrow = weakenTime - growTime + addedDelay;
-  const delayWeakenHack = addedDelay;
-  const delayWeakenGrow = delayGrow + addedDelay;
+  const delay = 20;
+  const hackWeakenDelay = 0;
+  const hackDelay = weakenTime - hackTime - delay;
+  const growDelay = weakenTime - growTime + 20;
+  const growWeakenDelay = 3 * delay;
 
   const servers = ns.getPurchasedServers();
   const availableServers = ["home", ...servers];
@@ -75,7 +75,7 @@ export async function batchHack(
           server,
           hackThreadAllocation,
           target,
-          delayHack,
+          hackDelay,
           Date.now()
         );
         remainingThreads.hackThreads -= hackThreadAllocation;
@@ -91,7 +91,7 @@ export async function batchHack(
           server,
           growThreadAllocation,
           target,
-          delayGrow,
+          growDelay,
           Date.now()
         );
         remainingThreads.growThreads -= growThreadAllocation;
@@ -107,7 +107,7 @@ export async function batchHack(
           server,
           weakenThreadHackAllocation,
           target,
-          delayWeakenHack,
+          hackWeakenDelay,
           Date.now()
         );
         remainingThreads.weakenThreadsHack -= weakenThreadHackAllocation;
@@ -123,7 +123,7 @@ export async function batchHack(
           server,
           weakenThreadGrowAllocation,
           target,
-          delayWeakenGrow,
+          growWeakenDelay,
           Date.now()
         );
         remainingThreads.weakenThreadsGrow -= weakenThreadGrowAllocation;
