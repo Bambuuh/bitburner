@@ -19,7 +19,7 @@ export function getHackableServers(ns: NS) {
       serversToScan.push(...ns.scan(server));
       const hasAccess = ns.hasRootAccess(server);
 
-      if (hasAccess && server !== "home") {
+      if (hasAccess && server !== "home" && !server.startsWith("server-")) {
         hackableServers.push(server);
       } else {
         const canHack =

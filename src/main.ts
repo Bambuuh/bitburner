@@ -55,10 +55,14 @@ export async function main(ns: NS): Promise<void> {
       const maxRam = getMaxAvailableRam(ns);
       const mostValuedServer = valueServers.reduce<ValueServer | undefined>(
         (best, server) => {
-          if (
-            !best ||
-            (best.hackingValue.value < server.hackingValue.value &&
-              server.hackingValue.requiredRam <= maxRam)
+          if (!best) {
+            return {
+              hackingValue: { value: 1, requiredRam: 1 },
+              name: "n00dles",
+            };
+          } else if (
+            best.hackingValue.value < server.hackingValue.value &&
+            server.hackingValue.requiredRam <= maxRam
           ) {
             return server;
           }
