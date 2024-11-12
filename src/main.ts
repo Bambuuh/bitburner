@@ -108,10 +108,8 @@ function setupScripts(ns: NS) {
 
 function getMaxAvailableRam(ns: NS) {
   const purchasedServers = ns.getPurchasedServers();
-  const homeRam = ns.getServerMaxRam("home");
-  const maxPurchased = purchasedServers.reduce(
+  return purchasedServers.reduce(
     (max, server) => Math.min(max, ns.getServerMaxRam(server)),
     Infinity
   );
-  return Math.max(homeRam, maxPurchased);
 }
