@@ -23,7 +23,7 @@ export function getHackableServers(ns: NS) {
         hackableServers.push(server);
       } else {
         const canHack =
-          ns.getServerRequiredHackingLevel(server) <= player.exp.hacking;
+          ns.getServerRequiredHackingLevel(server) <= player.skills.hacking;
 
         if (canHack) {
           const ports = ns.getServerNumPortsRequired(server);
