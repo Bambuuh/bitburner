@@ -21,7 +21,7 @@ export function getHackableServers(ns: NS) {
 
       if (hasAccess && server !== "home" && !server.startsWith("server-")) {
         hackableServers.push(server);
-      } else {
+      } else if (!server.startsWith("server-") && server !== "home") {
         const canHack =
           ns.getServerRequiredHackingLevel(server) <= player.skills.hacking;
 
