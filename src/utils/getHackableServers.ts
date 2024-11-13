@@ -1,10 +1,9 @@
-import { NS } from "@ns";
+import { NS, Player } from "@ns";
 
-export function getHackableServers(ns: NS) {
+export function getHackableServers(ns: NS, player: Player) {
   const visisted = new Set();
   const serversToScan = ["home"];
   const hackableServers = [];
-  const player = ns.getPlayer();
 
   const hasBrute = ns.fileExists("BruteSSH.exe", "home");
   const hasFTP = ns.fileExists("FTPCrack.exe", "home");
@@ -30,28 +29,28 @@ export function getHackableServers(ns: NS) {
           let closedPorts = ports;
 
           if (hasBrute) {
-            ns.brutessh(server);
             closedPorts -= 1;
+            ns.brutessh(server);
           }
 
           if (hasFTP) {
-            ns.ftpcrack(server);
             closedPorts -= 1;
+            ns.ftpcrack(server);
           }
 
           if (hasWorm) {
-            ns.httpworm(server);
             closedPorts -= 1;
+            ns.httpworm(server);
           }
 
           if (hasRelay) {
-            ns.relaysmtp(server);
             closedPorts -= 1;
+            ns.relaysmtp(server);
           }
 
           if (hasSQL) {
-            ns.sqlinject(server);
             closedPorts -= 1;
+            ns.sqlinject(server);
           }
 
           if (closedPorts === 0) {
