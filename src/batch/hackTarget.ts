@@ -9,10 +9,15 @@ type MaxHackValue = {
 };
 
 export function hackTarget(ns: NS, target: string, servers: string[]) {
+  const maxMoney = ns.getServerMaxMoney(target);
+
+  if (maxMoney === 0) {
+    return;
+  }
+
   const growScript = "grow.js";
   const weakenScript = "weaken.js";
   const hackScript = "hack.js";
-  const maxMoney = ns.getServerMaxMoney(target);
   const weakenCost = ns.getScriptRam(weakenScript);
   const growCost = ns.getScriptRam(growScript);
   const hackCost = ns.getScriptRam(hackScript);

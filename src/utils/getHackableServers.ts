@@ -18,9 +18,9 @@ export function getHackableServers(ns: NS, player: Player) {
       serversToScan.push(...ns.scan(server));
       const hasAccess = ns.hasRootAccess(server);
 
-      if (hasAccess && server !== "home" && !server.startsWith("server-")) {
+      if (hasAccess && isEligableServer(server)) {
         hackableServers.push(server);
-      } else if (!server.startsWith("server-") && server !== "home") {
+      } else if (isEligableServer(server)) {
         const canHack =
           ns.getServerRequiredHackingLevel(server) <= player.skills.hacking;
 
@@ -64,4 +64,10 @@ export function getHackableServers(ns: NS, player: Player) {
   }
 
   return hackableServers;
+}
+
+function isEligableServer(server: string) {
+  return (
+    server !== "home" && !server.startsWith("server-") && server !== "darkweb"
+  );
 }
