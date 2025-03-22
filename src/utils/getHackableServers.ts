@@ -53,9 +53,8 @@ export function getHackableServers(ns: NS, player: Player) {
             ns.sqlinject(server);
           }
 
-          if (closedPorts === 0) {
+          if (closedPorts <= 0) {
             ns.nuke(server);
-            ns.tprint(`Opened ${server}`);
             hackableServers.push(server);
           }
         }

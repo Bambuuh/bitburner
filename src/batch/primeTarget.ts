@@ -2,7 +2,12 @@ import { NS } from "@ns";
 import { getGrowthThreads } from "/utils/getGrowthThreads";
 import { getServerAvailableRam } from "/utils/getServerAvailableRam";
 
-export function primeTarget(ns: NS, target: string, servers: string[]) {
+export function primeTarget(
+  ns: NS,
+  valueTarget: ValueTarget,
+  servers: string[]
+): PrimeCandidate {
+  const target = valueTarget.server;
   const growScript = "grow.js";
   const weakenScript = "weaken.js";
   const maxMoney = ns.getServerMaxMoney(target);
@@ -42,7 +47,17 @@ export function primeTarget(ns: NS, target: string, servers: string[]) {
         threadsRemaining -= threads;
       }
     }
-    return false;
+    return {
+      server: target,
+      status: "weakening",
+      TTL: Date.now() + weakenTime + baseDelay,
+    };
+  } else if (valueTarget.value === 0) {
+    return {
+      server: target,
+      status: "primed",
+      TTL: Date.now(),
+    };
   } else if (currMoney < maxMoney) {
     let growThreadsRemaining = getGrowthThreads(ns, target);
 
@@ -69,8 +84,16 @@ export function primeTarget(ns: NS, target: string, servers: string[]) {
       }
     }
 
-    return false;
+    return {
+      server: target,
+      status: "growing",
+      TTL: Date.now() + weakenTime + delay,
+    };
   } else {
-    return true;
+    return {
+      server: target,
+      status: "primed",
+      TTL: Date.now(),
+    };
   }
 }

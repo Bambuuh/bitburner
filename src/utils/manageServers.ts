@@ -8,7 +8,7 @@ export function manageServers(ns: NS, player: Player, servers: string[]) {
 
   if (serverCount < serverLimit) {
     while (money >= newServerCost && serverCount < serverLimit) {
-      const name = ns.purchaseServer(`server-${servers.length.toString()}`, 64);
+      const name = ns.purchaseServer(`server-${servers.length.toString()}`, 32);
       if (name) {
         addScripts(ns, name);
         serverCount++;

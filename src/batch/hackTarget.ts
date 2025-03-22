@@ -8,11 +8,16 @@ type MaxHackValue = {
   growThreads: number;
 };
 
-export function hackTarget(ns: NS, target: string, servers: string[]) {
+export function hackTarget(
+  ns: NS,
+  target: string,
+  servers: string[],
+  initalDelay = 0
+) {
   const maxMoney = ns.getServerMaxMoney(target);
 
   if (maxMoney === 0) {
-    return;
+    return 0;
   }
 
   const growScript = "grow.js";
@@ -26,13 +31,13 @@ export function hackTarget(ns: NS, target: string, servers: string[]) {
   const growTime = ns.getGrowTime(target);
   const weakenTime = ns.getWeakenTime(target);
 
-  const baseDelay = 20;
+  const baseDelay = 40;
   const hackWeakenDelay = 0;
   const hackDelay = weakenTime - hackTime - baseDelay;
-  const growDelay = weakenTime - growTime + 20;
+  const growDelay = weakenTime - growTime + baseDelay;
   const growWeakenDelay = 3 * baseDelay;
 
-  let delay = 0;
+  let delay = initalDelay;
 
   for (const server of servers) {
     const availableRam = getServerAvailableRam(ns, server);
@@ -84,7 +89,7 @@ export function hackTarget(ns: NS, target: string, servers: string[]) {
     availableRam: number,
     factor = 0.5
   ): MaxHackValue | undefined {
-    if (factor < 0.1) {
+    if (factor < 0.01) {
       return undefined;
     }
 
@@ -93,9 +98,16 @@ export function hackTarget(ns: NS, target: string, servers: string[]) {
     );
     const remainingAmount = maxMoney * (1 - factor);
     const compensationMultiplier = maxMoney / remainingAmount;
-    const growThreads = Math.ceil(
+
+    const growThreadsInitial = Math.ceil(
       ns.growthAnalyze(target, compensationMultiplier)
     );
+
+    const growThreads = Math.max(
+      growThreadsInitial + 1,
+      Math.ceil(growThreadsInitial * 0.1)
+    );
+
     const growthSecurityIncrease = Math.ceil(
       ns.growthAnalyzeSecurity(growThreads, target)
     );
@@ -112,9 +124,14 @@ export function hackTarget(ns: NS, target: string, servers: string[]) {
       growThreads * growCost;
 
     if (totalCost > availableRam) {
-      return getMaxHackValue(availableRam, factor - 0.1);
+      if (factor > 0.2) {
+        return getMaxHackValue(availableRam, factor - 0.1);
+      }
+      return getMaxHackValue(availableRam, factor - 0.01);
     }
 
     return { growthWeakenThreads, hackWeakenThreads, hackThreads, growThreads };
   }
+
+  return delay;
 }
