@@ -38,9 +38,15 @@ export function hackTarget(
   const growWeakenDelay = 3 * baseDelay;
 
   let delay = initalDelay;
+  const maxBatchDelay = 4 * baseDelay; // Time for a complete batch cycle
+
+  // Track total threads deployed
+  let totalHackThreads = 0;
+  let totalGrowThreads = 0;
+  let totalWeakenThreads = 0;
 
   for (const server of servers) {
-    const availableRam = getServerAvailableRam(ns, server);
+    let availableRam = getServerAvailableRam(ns, server);
     let res = getMaxHackValue(availableRam);
 
     while (res) {
@@ -51,8 +57,20 @@ export function hackTarget(
         hackWeakenThreads,
       } = res;
 
+      // Calculate when this batch should start to avoid long waiting times
+      // This creates a "rolling window" of batches instead of linear stacking
+      const batchStartTime = Date.now() + delay;
+
       if (hackThreads > 0) {
-        ns.exec(hackScript, server, hackThreads, target, hackDelay + delay);
+        ns.exec(
+          hackScript,
+          server,
+          hackThreads,
+          target,
+          hackDelay + delay,
+          batchStartTime
+        );
+        totalHackThreads += hackThreads;
       }
 
       if (hackWeakenThreads > 0) {
@@ -61,12 +79,22 @@ export function hackTarget(
           server,
           hackWeakenThreads,
           target,
-          hackWeakenDelay + delay
+          hackWeakenDelay + delay,
+          batchStartTime
         );
+        totalWeakenThreads += hackWeakenThreads;
       }
 
       if (growThreads > 0) {
-        ns.exec(growScript, server, growThreads, target, growDelay + delay);
+        ns.exec(
+          growScript,
+          server,
+          growThreads,
+          target,
+          growDelay + delay,
+          batchStartTime
+        );
+        totalGrowThreads += growThreads;
       }
 
       if (growthWeakenThreads > 0) {
@@ -75,15 +103,31 @@ export function hackTarget(
           server,
           growthWeakenThreads,
           target,
-          growWeakenDelay + delay
+          growWeakenDelay + delay,
+          batchStartTime
         );
+        totalWeakenThreads += growthWeakenThreads;
       }
 
-      delay += baseDelay;
-      const availableRam = getServerAvailableRam(ns, server);
+      // Increment delay by just enough for the next batch
+      delay += maxBatchDelay;
+
+      // Limit the maximum number of batches to prevent excessive queuing
+      if (delay > 10000) {
+        // If we've scheduled too many batches, stop and let some complete
+        break;
+      }
+
+      availableRam = getServerAvailableRam(ns, server);
       res = getMaxHackValue(availableRam);
     }
   }
+
+  // Log information about the batches we've scheduled
+  ns.print(
+    `Deployed ${totalHackThreads} hack, ${totalGrowThreads} grow, and ${totalWeakenThreads} weaken threads`
+  );
+  ns.print(`Total delay window: ${delay}ms`);
 
   function getMaxHackValue(
     availableRam: number,
