@@ -1,9 +1,6 @@
-import { NS } from "@ns";
+import { NS, Person } from "@ns";
 
-export async function main(ns: NS): Promise<void> {
-  // Get all servers in the network
-  const servers = getAllServers(ns);
-
+export function getBestTarget(ns: NS, servers: string[], player: Person) {
   // Filter for hackable servers
   const hackableServers = servers.filter((server) => {
     // Check if we have admin rights
@@ -11,7 +8,7 @@ export async function main(ns: NS): Promise<void> {
 
     // Check if we meet the hacking requirement
     const requiredLevel = ns.getServerRequiredHackingLevel(server);
-    const playerLevel = ns.getHackingLevel();
+    const playerLevel = player.skills.hacking;
     if (playerLevel < requiredLevel) return false;
 
     // Check if server has money
@@ -25,71 +22,73 @@ export async function main(ns: NS): Promise<void> {
   const serverScores = hackableServers.map((server) => {
     const maxMoney = ns.getServerMaxMoney(server);
     const minSecurity = ns.getServerMinSecurityLevel(server);
-    const hackTime = ns.getHackTime(server);
-    const hackChance = ns.hackAnalyzeChance(server);
+    const growthRate = ns.getServerGrowth(server);
+
+    // Create mock server at minimum security
+    const mockServer = ns.formulas.mockServer();
+    mockServer.hostname = server;
+    mockServer.hackDifficulty = minSecurity;
+    mockServer.minDifficulty = minSecurity;
+    mockServer.moneyAvailable = maxMoney;
+    mockServer.moneyMax = maxMoney;
+    mockServer.serverGrowth = growthRate;
+
+    const hackTime = ns.formulas.hacking.hackTime(mockServer, player);
+    const hackChance = ns.formulas.hacking.hackChance(mockServer, player);
+    const growTime = ns.formulas.hacking.growTime(mockServer, player);
+    const weakenTime = ns.formulas.hacking.weakenTime(mockServer, player);
 
     // Calculate money per second (theoretical maximum)
     const moneyPerSecond = (maxMoney * hackChance) / (hackTime / 1000);
 
-    // Adjust score based on security level (lower is better)
+    // Adjust score based on security level and growth rate
     const securityFactor = 1 / (minSecurity + 1);
+    const growthFactor = growthRate / 100;
 
-    // Calculate final score
-    const score = moneyPerSecond * securityFactor;
+    // Consider the full HWGW cycle time
+    const cycleTime = Math.max(hackTime, weakenTime, growTime);
+    const timeEfficiency = 1 / (cycleTime / 1000);
+
+    // Calculate final score with weighted factors
+    const score =
+      moneyPerSecond * securityFactor * growthFactor * timeEfficiency;
 
     return {
       server,
       score,
       maxMoney,
       minSecurity,
+      growthRate,
       hackTime: hackTime / 1000, // Convert to seconds
       hackChance,
+      cycleTime: cycleTime / 1000,
     };
   });
 
   // Sort by score (highest first)
   serverScores.sort((a, b) => b.score - a.score);
 
-  // Display top 5 servers
-  ns.tprint("Top 5 servers for batch hacking:");
-  ns.tprint("-------------------------------");
-
-  for (let i = 0; i < Math.min(5, serverScores.length); i++) {
-    const { server, score, maxMoney, minSecurity, hackTime, hackChance } =
-      serverScores[i];
-    ns.tprint(`${i + 1}. ${server}`);
-    ns.tprint(`   Score: ${ns.formatNumber(score, 2)}`);
-    ns.tprint(`   Max Money: $${ns.formatNumber(maxMoney, 2)}`);
-    ns.tprint(`   Min Security: ${minSecurity.toFixed(2)}`);
-    ns.tprint(`   Hack Time: ${hackTime.toFixed(2)}s`);
-    ns.tprint(`   Hack Chance: ${(hackChance * 100).toFixed(2)}%`);
-    ns.tprint("-------------------------------");
-  }
-
-  // Return just the best server name if any arguments are provided
-  // This allows the script to be used programmatically
-  if (ns.args.length > 0 && serverScores.length > 0) {
-    ns.tprint(serverScores[0].server);
-  }
+  // Return the best server name
+  return serverScores.length > 0 ? serverScores[0].server : "";
 }
 
-// Helper function to get all servers in the network
-function getAllServers(ns: NS): string[] {
-  const servers: string[] = [];
-  const visited = new Set<string>();
+// // Helper function to get all servers in the network
+// function getAllServers(ns: NS): string[] {
+//   const servers: string[] = [];
+//   const visited = new Set<string>();
 
-  function scanServer(host: string) {
-    if (visited.has(host)) return;
+//   function scanServer(host: string) {
+//     if (visited.has(host)) return;
 
-    visited.add(host);
-    servers.push(host);
+//     visited.add(host);
+//     servers.push(host);
 
-    const connectedServers = ns.scan(host);
-    for (const server of connectedServers) {
-      scanServer(server);
-    }
-  }
+//     const connectedServers = ns.scan(host);
+//     for (const server of connectedServers) {
+//       scanServer(server);
+//     }
+//   }
 
-  scanServer("home");
-  return servers.filter((s) => s !== "home"); // Exclude home server
-}
+//   scanServer("home");
+//   return servers.filter((s) => s !== "home"); // Exclude home server
+// }

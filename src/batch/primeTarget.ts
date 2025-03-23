@@ -4,10 +4,9 @@ import { getServerAvailableRam } from "/utils/getServerAvailableRam";
 
 export function primeTarget(
   ns: NS,
-  valueTarget: ValueTarget,
+  target: string,
   servers: string[]
 ): PrimeCandidate {
-  const target = valueTarget.server;
   const growScript = "grow.js";
   const weakenScript = "weaken.js";
   const maxMoney = ns.getServerMaxMoney(target);
@@ -23,7 +22,7 @@ export function primeTarget(
   const weakenTime = ns.getWeakenTime(target);
   const growTime = ns.getGrowTime(target);
 
-  const baseDelay = 25;
+  const baseDelay = 100;
   const growDelay = weakenTime - growTime - baseDelay;
 
   if (missingSecurity > 0) {
@@ -51,12 +50,6 @@ export function primeTarget(
       server: target,
       status: "weakening",
       TTL: Date.now() + weakenTime + baseDelay,
-    };
-  } else if (valueTarget.value === 0) {
-    return {
-      server: target,
-      status: "primed",
-      TTL: Date.now(),
     };
   } else if (currMoney < maxMoney) {
     let growThreadsRemaining = getGrowthThreads(ns, target);

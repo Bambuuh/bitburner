@@ -31,7 +31,7 @@ export function hackTarget(
   const growTime = ns.getGrowTime(target);
   const weakenTime = ns.getWeakenTime(target);
 
-  const baseDelay = 40;
+  const baseDelay = 100;
   const hackWeakenDelay = 0;
   const hackDelay = weakenTime - hackTime - baseDelay;
   const growDelay = weakenTime - growTime + baseDelay;
@@ -57,57 +57,59 @@ export function hackTarget(
         hackWeakenThreads,
       } = res;
 
+      // Skip invalid batches - ensure we have at least 1 thread for each operation
+      if (
+        hackThreads <= 0 ||
+        growThreads <= 0 ||
+        hackWeakenThreads <= 0 ||
+        growthWeakenThreads <= 0
+      ) {
+        break;
+      }
+
       // Calculate when this batch should start to avoid long waiting times
-      // This creates a "rolling window" of batches instead of linear stacking
       const batchStartTime = Date.now() + delay;
 
-      if (hackThreads > 0) {
-        ns.exec(
-          hackScript,
-          server,
-          hackThreads,
-          target,
-          hackDelay + delay,
-          batchStartTime
-        );
-        totalHackThreads += hackThreads;
-      }
+      // Execute the batch
+      ns.exec(
+        hackScript,
+        server,
+        hackThreads,
+        target,
+        hackDelay + delay,
+        batchStartTime
+      );
 
-      if (hackWeakenThreads > 0) {
-        ns.exec(
-          weakenScript,
-          server,
-          hackWeakenThreads,
-          target,
-          hackWeakenDelay + delay,
-          batchStartTime
-        );
-        totalWeakenThreads += hackWeakenThreads;
-      }
+      ns.exec(
+        weakenScript,
+        server,
+        hackWeakenThreads,
+        target,
+        hackWeakenDelay + delay,
+        batchStartTime
+      );
 
-      if (growThreads > 0) {
-        ns.exec(
-          growScript,
-          server,
-          growThreads,
-          target,
-          growDelay + delay,
-          batchStartTime
-        );
-        totalGrowThreads += growThreads;
-      }
+      ns.exec(
+        growScript,
+        server,
+        growThreads,
+        target,
+        growDelay + delay,
+        batchStartTime
+      );
 
-      if (growthWeakenThreads > 0) {
-        ns.exec(
-          weakenScript,
-          server,
-          growthWeakenThreads,
-          target,
-          growWeakenDelay + delay,
-          batchStartTime
-        );
-        totalWeakenThreads += growthWeakenThreads;
-      }
+      ns.exec(
+        weakenScript,
+        server,
+        growthWeakenThreads,
+        target,
+        growWeakenDelay + delay,
+        batchStartTime
+      );
+
+      totalHackThreads += hackThreads;
+      totalWeakenThreads += hackWeakenThreads + growthWeakenThreads;
+      totalGrowThreads += growThreads;
 
       // Increment delay by just enough for the next batch
       delay += maxBatchDelay;
@@ -137,29 +139,39 @@ export function hackTarget(
       return undefined;
     }
 
+    // Calculate hack threads needed for the target percentage of max money
     const hackThreads = Math.floor(
       ns.hackAnalyzeThreads(target, maxMoney * factor)
     );
+
+    // If we can't hack anything meaningful, return undefined
+    if (hackThreads <= 0) {
+      return undefined;
+    }
+
     const remainingAmount = maxMoney * (1 - factor);
-    const compensationMultiplier = maxMoney / remainingAmount;
+    const compensationMultiplier = maxMoney / Math.max(1, remainingAmount);
 
     const growThreadsInitial = Math.ceil(
       ns.growthAnalyze(target, compensationMultiplier)
     );
 
-    const growThreads = Math.max(
-      growThreadsInitial + 1,
-      Math.ceil(growThreadsInitial * 0.1)
+    const growThreads = Math.max(1, growThreadsInitial);
+
+    const growthSecurityIncrease = ns.growthAnalyzeSecurity(
+      growThreads,
+      target
+    );
+    const growthWeakenThreads = Math.max(
+      1,
+      Math.ceil(growthSecurityIncrease / weakenEffect)
     );
 
-    const growthSecurityIncrease = Math.ceil(
-      ns.growthAnalyzeSecurity(growThreads, target)
-    );
-    const growthWeakenThreads = Math.ceil(
-      growthSecurityIncrease / weakenEffect
-    );
     const hackSecurityIncrease = ns.hackAnalyzeSecurity(hackThreads, target);
-    const hackWeakenThreads = Math.ceil(hackSecurityIncrease / weakenEffect);
+    const hackWeakenThreads = Math.max(
+      1,
+      Math.ceil(hackSecurityIncrease / weakenEffect)
+    );
 
     const totalCost =
       growthWeakenThreads * weakenCost +

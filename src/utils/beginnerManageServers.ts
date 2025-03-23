@@ -1,16 +1,21 @@
 import { NS, Player } from "@ns";
 
-export function manageServers(ns: NS, player: Player, servers: string[]) {
-  const newServerCost = ns.getPurchasedServerCost(32);
+export function beginnerManageServers(
+  ns: NS,
+  player: Player,
+  servers: string[]
+) {
+  const newServerCost = ns.getPurchasedServerCost(8);
   let money = player.money;
   const serverLimit = ns.getPurchasedServerLimit();
   let serverCount = servers.length;
 
   if (serverCount < serverLimit) {
     while (money >= newServerCost && serverCount < serverLimit) {
-      const name = ns.purchaseServer(`server-${servers.length.toString()}`, 32);
+      const name = ns.purchaseServer(`server-${servers.length.toString()}`, 8);
       if (name) {
         addScripts(ns, name);
+        ns.exec("trimmedBeginner.js", name);
         serverCount++;
         ns.tprint(`Purchased new server, new count ${serverCount}`);
         money -= newServerCost;
@@ -28,7 +33,7 @@ export function manageServers(ns: NS, player: Player, servers: string[]) {
 }
 
 function addScripts(ns: NS, server: string) {
-  const scripts = ["hack.js", "grow.js", "weaken.js"];
+  const scripts = ["hack.js", "grow.js", "weaken.js", "trimmedBeginner.js"];
 
   for (const script of scripts) {
     ns.scp(script, server);

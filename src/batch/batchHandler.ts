@@ -7,29 +7,27 @@ export function batchHandler(
   primedServers: string[],
   serversBeingPrimed: PrimeCandidate[],
   purchasedServers: string[],
-  targets: ValueTarget[]
+  target: string
 ) {
   const servers: string[] = ["home", ...purchasedServers];
-  for (const target of targets) {
-    const isPriming = serversBeingPrimed.some(
-      (primed) => primed.server === target.server
-    );
+  const isPriming = serversBeingPrimed.some(
+    (primed) => primed.server === target
+  );
 
-    if (isPriming) {
-      continue;
-    }
+  if (isPriming) {
+    return;
+  }
 
-    const isPrimed = primedServers.includes(target.server);
+  const isPrimed = primedServers.includes(target);
 
-    if (!isPrimed) {
-      const res = primeTarget(ns, target, servers);
-      if (res.status === "primed") {
-        primedServers.push(target.server);
-      } else {
-        serversBeingPrimed.push(res);
-      }
+  if (!isPrimed) {
+    const res = primeTarget(ns, target, servers);
+    if (res.status === "primed") {
+      primedServers.push(target);
     } else {
-      hackTarget(ns, target.server, servers);
+      serversBeingPrimed.push(res);
     }
+  } else {
+    hackTarget(ns, target, servers);
   }
 }

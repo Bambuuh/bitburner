@@ -1,5 +1,6 @@
 import { NS } from "@ns";
-import { manageServers } from "/utils/manageServers";
+// import { manageServers } from "/utils/manageServers";
+import { beginnerManageServers } from "/utils/beginnerManageServers";
 
 export async function main(ns: NS): Promise<void> {
   // ns.run("spider.js");
@@ -9,16 +10,16 @@ export async function main(ns: NS): Promise<void> {
   // ns.run("purchaseServers.js");
   // ns.run("upgradeServers.js");
 
-  await prepTarget(target);
+  // await prepTarget(target);
 
   while (true) {
     const player = ns.getPlayer();
     const servers = ns.getPurchasedServers();
-    if (servers.length > 4) {
-      ns.exec("main.js", "home");
-      return;
-    }
-    manageServers(ns, player, servers);
+    // if (servers.length > 4) {
+    //   ns.exec("main.js", "home");
+    //   return;
+    // }
+    beginnerManageServers(ns, player, servers);
     const security = ns.getServerSecurityLevel(target);
     const minSecurity = ns.getServerMinSecurityLevel(target);
     const maxRam = ns.getServerMaxRam("home");

@@ -1,13 +1,16 @@
 import { NS } from "@ns";
 import { batchHandler } from "/batch/batchHandler";
-import { getHackingValueList } from "/utils/getHackingValueList";
+// import { getHackingValueList } from "/utils/getHackingValueList";
+import { getBestTarget } from "./bestHackTarget";
 import { getHackableServers } from "/utils/getHackableServers";
 import { manageServers } from "/utils/manageServers";
 
 export async function main(ns: NS): Promise<void> {
   const primedServers: string[] = [];
   let serversBeingPrimed: PrimeCandidate[] = [];
-  const homeRam = ns.getServerMaxRam("home");
+  // const homeRam = ns.getServerMaxRam("home");
+
+  let currentTarget = undefined;
 
   while (true) {
     serversBeingPrimed = serversBeingPrimed.filter((prime) => {
@@ -20,26 +23,34 @@ export async function main(ns: NS): Promise<void> {
     const purchasedServers = ns.getPurchasedServers();
     const player = ns.getPlayer();
 
-    if (homeRam >= 128) {
-      manageServers(ns, player, purchasedServers);
+    const hackableServers = getHackableServers(ns, player);
+    const bestTarget = getBestTarget(ns, hackableServers, player) ?? "n00dles";
 
-      const hackableServers = getHackableServers(ns, player);
-
-      const hackingValueList = getHackingValueList(ns, hackableServers);
-
-      batchHandler(
-        ns,
-        primedServers,
-        serversBeingPrimed,
-        purchasedServers,
-        hackingValueList
-      );
-    } else {
-      manageServers(ns, player, purchasedServers);
-      batchHandler(ns, primedServers, serversBeingPrimed, purchasedServers, [
-        { server: "n00dles", value: 1 },
-      ]);
+    if (currentTarget !== bestTarget) {
+      ns.tprint(`New target ${bestTarget}`);
+      currentTarget = bestTarget;
     }
+
+    // if (homeRam >= 128) {
+    manageServers(ns, player, purchasedServers);
+
+    batchHandler(
+      ns,
+      primedServers,
+      serversBeingPrimed,
+      purchasedServers,
+      bestTarget
+    );
+    // } else {
+    //   manageServers(ns, player, purchasedServers);
+    //   batchHandler(
+    //     ns,
+    //     primedServers,
+    //     serversBeingPrimed,
+    //     purchasedServers,
+    //     "n00dles"
+    //   );
+    // }
 
     await ns.sleep(1000);
   }
