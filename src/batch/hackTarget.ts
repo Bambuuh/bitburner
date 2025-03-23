@@ -135,7 +135,9 @@ export function hackTarget(
     availableRam: number,
     factor = 0.5
   ): MaxHackValue | undefined {
-    if (factor < 0.01) {
+    const minFactor = 0.0001;
+
+    if (factor < minFactor) {
       return undefined;
     }
 
@@ -149,14 +151,13 @@ export function hackTarget(
       return undefined;
     }
 
-    const remainingAmount = maxMoney * (1 - factor);
-    const compensationMultiplier = maxMoney / Math.max(1, remainingAmount);
+    const hackPercentage = ns.hackAnalyze(target) * hackThreads;
+    const remainingPercentage = Math.max(0, 1 - hackPercentage);
 
-    const growThreadsInitial = Math.ceil(
-      ns.growthAnalyze(target, compensationMultiplier)
+    const growMultiplierNeeded = 1 / Math.max(minFactor, remainingPercentage);
+    const growThreads = Math.ceil(
+      ns.growthAnalyze(target, growMultiplierNeeded)
     );
-
-    const growThreads = Math.max(1, growThreadsInitial);
 
     const growthSecurityIncrease = ns.growthAnalyzeSecurity(
       growThreads,
