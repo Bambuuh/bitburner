@@ -62,10 +62,13 @@ export function primeTarget(
       }
 
       const availableRam = getServerAvailableRam(ns, server);
-      const maxThreads = Math.floor(availableRam / (growCost + weakenCost));
+      const maxThreads = getMaxThreads(availableRam, growThreadsRemaining);
 
-      if (maxThreads > 0) {
-        const growThreads = Math.min(maxThreads, growThreadsRemaining);
+      if (maxThreads) {
+        const growThreads = Math.min(
+          maxThreads.growThreads,
+          growThreadsRemaining
+        );
 
         const securityIncrease = ns.growthAnalyzeSecurity(growThreads, target);
         const weakenThreads = Math.ceil(securityIncrease / weakenEffect);
@@ -88,5 +91,23 @@ export function primeTarget(
       status: "primed",
       TTL: Date.now(),
     };
+  }
+
+  function getMaxThreads(maxRam: number, growThreadsRemaining: number) {
+    let growThreads = growThreadsRemaining;
+
+    while (growThreads > 0) {
+      const securityIncrease = ns.growthAnalyzeSecurity(growThreads, target);
+      const weakenThreads = Math.ceil(securityIncrease / weakenEffect);
+      const totalGrowCost = growThreads * growCost;
+      const totalWeakenCost = weakenThreads * weakenCost;
+      if (maxRam > totalGrowCost + totalWeakenCost) {
+        return { growThreads, weakenThreads };
+      }
+
+      growThreads -= 1;
+    }
+
+    return undefined;
   }
 }
