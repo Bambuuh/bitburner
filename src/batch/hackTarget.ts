@@ -182,15 +182,17 @@ export async function hackTarget(
     mockHackedServer.moneyAvailable = Math.ceil(
       (mockHackedServer.moneyMax ?? 0) * remainingPercentage
     );
+
+    const weakenMargin = 2;
+    const growMargin = 1.5;
+
     const growThreads = Math.ceil(
       ns.formulas.hacking.growThreads(
         mockHackedServer,
         player,
         mockHackedServer.moneyMax ?? 0
-      )
+      ) * growMargin
     );
-
-    const weakenMargin = 1;
 
     const growthSecurityIncrease = ns.growthAnalyzeSecurity(growThreads);
     const growthWeakenThreads = Math.max(
