@@ -27,4 +27,5 @@ export async function main(ns: NS): Promise<void> {
 
   // Perform the grow
   await ns.grow(target);
+  // ns.tprint("GROW DONE");
 }

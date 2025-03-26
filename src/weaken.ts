@@ -27,4 +27,5 @@ export async function main(ns: NS): Promise<void> {
 
   // Perform the weaken
   await ns.weaken(target);
+  // ns.tprint("WEAKEN DONE");
 }

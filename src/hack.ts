@@ -27,4 +27,5 @@ export async function main(ns: NS): Promise<void> {
 
   // Perform the hack
   await ns.hack(target);
+  // ns.tprint("HACK DONE");
 }

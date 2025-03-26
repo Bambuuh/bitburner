@@ -1,4 +1,10 @@
-Tian Di Hui 
+1. Tian Di Hui 
   - $ 1 m
   - Hacking level 50
   - be in Chongqing
+
+2. CSEC
+  - 52 hacking
+  - BruteSSH.exe
+
+3. Netburners

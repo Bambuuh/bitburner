@@ -5,20 +5,26 @@ type MaxHackValue = {
   growthWeakenThreads: number;
   hackWeakenThreads: number;
   hackThreads: number;
-  growThreads: number;
+  growhreads: number;
 };
 
-export function hackTarget(
+export async function hackTarget(
   ns: NS,
   target: string,
   servers: string[],
-  initalDelay = 0
+  nextBatchStart = new Date().getTime()
 ) {
   const maxMoney = ns.getServerMaxMoney(target);
 
   if (maxMoney === 0) {
     return 0;
   }
+
+  const mockedServer = ns.getServer(target);
+  const player = ns.getPlayer();
+
+  mockedServer.hackDifficulty = mockedServer.minDifficulty;
+  mockedServer.moneyAvailable = mockedServer.moneyMax;
 
   const growScript = "grow.js";
   const weakenScript = "weaken.js";
@@ -27,37 +33,55 @@ export function hackTarget(
   const growCost = ns.getScriptRam(growScript);
   const hackCost = ns.getScriptRam(hackScript);
   const weakenEffect = ns.weakenAnalyze(1);
-  const hackTime = ns.getHackTime(target);
-  const growTime = ns.getGrowTime(target);
-  const weakenTime = ns.getWeakenTime(target);
+  const hackTime = Math.ceil(
+    ns.formulas.hacking.hackTime(mockedServer, player)
+  );
+  const growTime = Math.ceil(
+    ns.formulas.hacking.growTime(mockedServer, player)
+  );
+  const weakenTime = Math.ceil(
+    ns.formulas.hacking.weakenTime(mockedServer, player)
+  );
 
   const baseDelay = 100;
   const hackWeakenDelay = 0;
   const hackDelay = weakenTime - hackTime - baseDelay;
   const growDelay = weakenTime - growTime + baseDelay;
-  const growWeakenDelay = 3 * baseDelay;
+  const growWeakenDelay = 2 * baseDelay;
 
-  let delay = initalDelay;
-  const maxBatchDelay = 4 * baseDelay; // Time for a complete batch cycle
+  // ns.tprint("hack duration", hackDelay + hackTime);
+  // ns.tprint("hack weaken duration", hackWeakenDelay + weakenTime);
+  // ns.tprint("grow duration", growDelay + growTime);
+  // ns.tprint("grow weaken duration", growWeakenDelay + weakenTime);
 
-  // Track total threads deployed
-  let totalHackThreads = 0;
-  let totalGrowThreads = 0;
-  let totalWeakenThreads = 0;
+  // ns.print(
+  //   `Security: ${ns.getServerSecurityLevel(
+  //     target
+  //   )} (min: ${ns.getServerMinSecurityLevel(target)})`
+  // );
+
+  // const initialDelay = Math.max(0, nextBatchStart - new Date().getTime());
+
+  // let delay = 0;
+  // const maxBatchDelay = growWeakenDelay + weakenTime; // Time for a complete batch cycle
+
+  // const servers2 = ["home"];
+  // let batchStartTime = Math.max(Date.now(), nextBatchStart) + delay;
+  let batchStartTime = Math.max(Date.now(), nextBatchStart);
 
   for (const server of servers) {
+    // for (const server of servers2) {
     let availableRam = getServerAvailableRam(ns, server);
     let res = getMaxHackValue(availableRam);
 
     while (res) {
       const {
-        growThreads,
+        growhreads: growThreads,
         growthWeakenThreads,
         hackThreads,
         hackWeakenThreads,
       } = res;
 
-      // Skip invalid batches - ensure we have at least 1 thread for each operation
       if (
         hackThreads <= 0 ||
         growThreads <= 0 ||
@@ -68,7 +92,6 @@ export function hackTarget(
       }
 
       // Calculate when this batch should start to avoid long waiting times
-      const batchStartTime = Date.now() + delay;
 
       // Execute the batch
       ns.exec(
@@ -76,7 +99,7 @@ export function hackTarget(
         server,
         hackThreads,
         target,
-        hackDelay + delay,
+        hackDelay,
         batchStartTime
       );
 
@@ -85,7 +108,7 @@ export function hackTarget(
         server,
         hackWeakenThreads,
         target,
-        hackWeakenDelay + delay,
+        hackWeakenDelay,
         batchStartTime
       );
 
@@ -94,7 +117,7 @@ export function hackTarget(
         server,
         growThreads,
         target,
-        growDelay + delay,
+        growDelay,
         batchStartTime
       );
 
@@ -103,33 +126,29 @@ export function hackTarget(
         server,
         growthWeakenThreads,
         target,
-        growWeakenDelay + delay,
+        growWeakenDelay,
         batchStartTime
       );
 
-      totalHackThreads += hackThreads;
-      totalWeakenThreads += hackWeakenThreads + growthWeakenThreads;
-      totalGrowThreads += growThreads;
+      // delay += 3 * baseDelay;
+      batchStartTime =
+        Math.max(new Date().getTime(), batchStartTime) + 3 * baseDelay;
 
-      // Increment delay by just enough for the next batch
-      delay += maxBatchDelay;
+      // const x = ns.getServer(target);
+      // ns.tprint("MONEY", x.moneyAvailable);
+      // ns.tprint("SEC", x.hackDifficulty);
+      // await ns.sleep(delay + 1000);
 
-      // Limit the maximum number of batches to prevent excessive queuing
-      if (delay > 10000) {
-        // If we've scheduled too many batches, stop and let some complete
-        break;
-      }
+      // if (delay > 10000) {
+      //   break;
+      // }
+
+      // ns.tprint("NEW DELAY " + delay);
 
       availableRam = getServerAvailableRam(ns, server);
       res = getMaxHackValue(availableRam);
     }
   }
-
-  // Log information about the batches we've scheduled
-  ns.print(
-    `Deployed ${totalHackThreads} hack, ${totalGrowThreads} grow, and ${totalWeakenThreads} weaken threads`
-  );
-  ns.print(`Total delay window: ${delay}ms`);
 
   function getMaxHackValue(
     availableRam: number,
@@ -151,27 +170,38 @@ export function hackTarget(
       return undefined;
     }
 
-    const hackPercentage = ns.hackAnalyze(target) * hackThreads;
+    const hackPerThread = ns.formulas.hacking.hackPercent(
+      mockedServer,
+      ns.getPlayer()
+    );
+
+    const hackPercentage = hackPerThread * hackThreads;
     const remainingPercentage = Math.max(0, 1 - hackPercentage);
 
-    const growMultiplierNeeded = 1 / Math.max(minFactor, remainingPercentage);
+    const mockHackedServer = { ...mockedServer };
+    mockHackedServer.moneyAvailable = Math.ceil(
+      (mockHackedServer.moneyMax ?? 0) * remainingPercentage
+    );
     const growThreads = Math.ceil(
-      ns.growthAnalyze(target, growMultiplierNeeded)
+      ns.formulas.hacking.growThreads(
+        mockHackedServer,
+        player,
+        mockHackedServer.moneyMax ?? 0
+      )
     );
 
-    const growthSecurityIncrease = ns.growthAnalyzeSecurity(
-      growThreads,
-      target
-    );
+    const weakenMargin = 1;
+
+    const growthSecurityIncrease = ns.growthAnalyzeSecurity(growThreads);
     const growthWeakenThreads = Math.max(
       1,
-      Math.ceil(growthSecurityIncrease / weakenEffect)
+      Math.ceil((growthSecurityIncrease / weakenEffect) * weakenMargin)
     );
 
     const hackSecurityIncrease = ns.hackAnalyzeSecurity(hackThreads, target);
     const hackWeakenThreads = Math.max(
       1,
-      Math.ceil(hackSecurityIncrease / weakenEffect)
+      Math.ceil((hackSecurityIncrease / weakenEffect) * weakenMargin)
     );
 
     const totalCost =
@@ -187,8 +217,13 @@ export function hackTarget(
       return getMaxHackValue(availableRam, factor - 0.01);
     }
 
-    return { growthWeakenThreads, hackWeakenThreads, hackThreads, growThreads };
+    return {
+      growthWeakenThreads,
+      hackWeakenThreads,
+      hackThreads,
+      growhreads: growThreads,
+    };
   }
 
-  return delay;
+  return nextBatchStart + 3 * baseDelay;
 }

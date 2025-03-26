@@ -2,20 +2,21 @@ import { NS } from "@ns";
 import { primeTarget } from "/batch/primeTarget";
 import { hackTarget } from "/batch/hackTarget";
 
-export function batchHandler(
+export async function batchHandler(
   ns: NS,
   primedServers: string[],
   serversBeingPrimed: PrimeCandidate[],
   purchasedServers: string[],
-  target: string
-) {
+  target: string,
+  nextBatchStart = new Date().getTime()
+): Promise<number | undefined> {
   const servers: string[] = ["home", ...purchasedServers];
   const isPriming = serversBeingPrimed.some(
     (primed) => primed.server === target
   );
 
   if (isPriming) {
-    return;
+    return undefined;
   }
 
   const isPrimed = primedServers.includes(target);
@@ -27,7 +28,8 @@ export function batchHandler(
     } else {
       serversBeingPrimed.push(res);
     }
+    return undefined;
   } else {
-    hackTarget(ns, target, servers);
+    return await hackTarget(ns, target, servers, nextBatchStart);
   }
 }
