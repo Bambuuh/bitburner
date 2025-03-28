@@ -8,10 +8,10 @@ export async function main(ns: NS): Promise<void> {
   ns.disableLog("ALL");
   const primedServers: string[] = [];
   let serversBeingPrimed: PrimeCandidate[] = [];
-
   let currentTarget = undefined;
-
   let nextBatchStart: number | undefined = new Date().getTime();
+  let nextTargetCooldown = new Date().getTime();
+  const tenMinutes = 1000 * 60 * 10;
 
   while (true) {
     serversBeingPrimed = serversBeingPrimed.filter((prime) => {
@@ -29,13 +29,16 @@ export async function main(ns: NS): Promise<void> {
     );
     const bestTarget = isAllServersSmall
       ? "n00dles"
-      : getBestTarget(ns, hackableServers, player) ?? "n00dles";
+      : getBestTarget(ns, hackableServers, player, purchasedServers) ??
+        "n00dles";
 
-    // const bestTarget = "n00dles";
-
-    if (currentTarget !== bestTarget) {
+    if (
+      currentTarget !== bestTarget &&
+      new Date().getTime() > nextTargetCooldown
+    ) {
       ns.tprint(`New target ${bestTarget}`);
       currentTarget = bestTarget;
+      nextTargetCooldown = new Date().getTime() + tenMinutes;
     }
 
     manageServers(ns, player, purchasedServers);
@@ -48,12 +51,6 @@ export async function main(ns: NS): Promise<void> {
       bestTarget,
       nextBatchStart
     );
-
-    // ns.tprint(
-    //   `NEXT BATCH IN ${
-    //     ((nextBatchStart ?? new Date().getTime()) - new Date().getTime()) / 1000
-    //   } seconds`
-    // );
 
     await ns.sleep(1000);
   }

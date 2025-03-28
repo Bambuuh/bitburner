@@ -24,9 +24,13 @@ export function primeTarget(
 
   const baseDelay = 100;
   const growDelay = weakenTime - growTime - baseDelay;
+  const weakenMargin = 1.2;
+  const growMargin = 1.2;
 
   if (missingSecurity > 0) {
-    let threadsRemaining = Math.ceil(missingSecurity / weakenPerThread);
+    let threadsRemaining = Math.ceil(
+      (missingSecurity / weakenPerThread) * weakenMargin
+    );
 
     for (const server of servers) {
       if (threadsRemaining <= 0) {
@@ -94,11 +98,13 @@ export function primeTarget(
   }
 
   function getMaxThreads(maxRam: number, growThreadsRemaining: number) {
-    let growThreads = growThreadsRemaining;
+    let growThreads = growThreadsRemaining * growMargin;
 
     while (growThreads > 0) {
-      const securityIncrease = ns.growthAnalyzeSecurity(growThreads, target);
-      const weakenThreads = Math.ceil(securityIncrease / weakenEffect);
+      const securityIncrease = ns.growthAnalyzeSecurity(growThreads);
+      const weakenThreads = Math.ceil(
+        (securityIncrease / weakenEffect) * weakenMargin
+      );
       const totalGrowCost = growThreads * growCost;
       const totalWeakenCost = weakenThreads * weakenCost;
       if (maxRam > totalGrowCost + totalWeakenCost) {

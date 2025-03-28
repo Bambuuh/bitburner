@@ -1,94 +1,55 @@
 import { NS, Person } from "@ns";
+import { getMaxHackValue } from "/getMaxHackValue";
 
-export function getBestTarget(ns: NS, servers: string[], player: Person) {
-  // Filter for hackable servers
+export function getBestTarget(
+  ns: NS,
+  servers: string[],
+  player: Person,
+  playerServers: string[]
+) {
   const hackableServers = servers.filter((server) => {
-    // Check if we have admin rights
     if (!ns.hasRootAccess(server)) return false;
 
-    // Check if we meet the hacking requirement
     const requiredLevel = ns.getServerRequiredHackingLevel(server);
     const playerLevel = player.skills.hacking;
     if (playerLevel < requiredLevel) return false;
 
-    // Check if server has money
     const maxMoney = ns.getServerMaxMoney(server);
     if (maxMoney <= 0) return false;
 
     return true;
   });
 
-  // Calculate score for each server
+  const homeRam = ns.getServerMaxRam("home");
+  const purchasedRam = ns.getServerMaxRam(playerServers[0]);
+
+  const maxRam = homeRam > purchasedRam ? homeRam : purchasedRam;
+
   const serverScores = hackableServers.map((server) => {
-    const maxMoney = ns.getServerMaxMoney(server);
-    const minSecurity = ns.getServerMinSecurityLevel(server);
-    const growthRate = ns.getServerGrowth(server);
+    const mockedServer = ns.getServer(server);
+    mockedServer.hackDifficulty = mockedServer.minDifficulty;
+    mockedServer.moneyAvailable = mockedServer.moneyMax ?? 0;
 
-    // Create mock server at minimum security
-    const mockServer = ns.formulas.mockServer();
-    mockServer.hostname = server;
-    mockServer.hackDifficulty = minSecurity;
-    mockServer.minDifficulty = minSecurity;
-    mockServer.moneyAvailable = maxMoney;
-    mockServer.moneyMax = maxMoney;
-    mockServer.serverGrowth = growthRate;
+    const weakenTime = ns.formulas.hacking.weakenTime(mockedServer, player);
+    const hackChance = ns.formulas.hacking.hackChance(mockedServer, player);
 
-    const hackTime = ns.formulas.hacking.hackTime(mockServer, player);
-    const hackChance = ns.formulas.hacking.hackChance(mockServer, player);
-    const growTime = ns.formulas.hacking.growTime(mockServer, player);
-    const weakenTime = ns.formulas.hacking.weakenTime(mockServer, player);
+    const x = getMaxHackValue(ns, player, server, mockedServer, maxRam);
 
-    // Calculate money per second (theoretical maximum)
-    const moneyPerSecond = (maxMoney * hackChance) / (hackTime / 1000);
+    let moneyPerMs = 0;
 
-    // Adjust score based on security level and growth rate
-    const securityFactor = 1 / (minSecurity + 1);
-    const growthFactor = growthRate / 100;
-
-    // Consider the full HWGW cycle time
-    const cycleTime = Math.max(hackTime, weakenTime, growTime);
-    const timeEfficiency = 1 / (cycleTime / 1000);
-
-    // Calculate final score with weighted factors
-    const score =
-      moneyPerSecond * securityFactor * growthFactor * timeEfficiency;
+    if (x) {
+      const batchTime = 200 + weakenTime;
+      const moneyHacked = mockedServer.moneyAvailable * x.factor;
+      moneyPerMs = hackChance == 1 ? moneyHacked / batchTime : 0;
+    }
 
     return {
       server,
-      score,
-      maxMoney,
-      minSecurity,
-      growthRate,
-      hackTime: hackTime / 1000, // Convert to seconds
-      hackChance,
-      cycleTime: cycleTime / 1000,
+      moneyPerMs,
     };
   });
 
-  // Sort by score (highest first)
-  serverScores.sort((a, b) => b.score - a.score);
+  serverScores.sort((a, b) => b.moneyPerMs - a.moneyPerMs);
 
-  // Return the best server name
   return serverScores.length > 0 ? serverScores[0].server : "";
 }
-
-// // Helper function to get all servers in the network
-// function getAllServers(ns: NS): string[] {
-//   const servers: string[] = [];
-//   const visited = new Set<string>();
-
-//   function scanServer(host: string) {
-//     if (visited.has(host)) return;
-
-//     visited.add(host);
-//     servers.push(host);
-
-//     const connectedServers = ns.scan(host);
-//     for (const server of connectedServers) {
-//       scanServer(server);
-//     }
-//   }
-
-//   scanServer("home");
-//   return servers.filter((s) => s !== "home"); // Exclude home server
-// }

@@ -15,8 +15,6 @@ export async function main(ns: NS): Promise<void> {
       servers.length > 20 &&
       servers.every((server) => ns.getServerMaxRam(server) >= 32);
 
-    ns.tprint(isAllServersBig);
-
     if (isAllServersBig) {
       servers.forEach((server) => {
         ns.killall(server);
