@@ -7,14 +7,15 @@
   - 52 hacking
   - BruteSSH.exe
 
-3. Netburners
+3. Nitesec
+  - avmnite-02h
 
-4. Nitesec
+4. The Black Hand
+- I.I.I.I
 
-5. The Black Hand
+5. BitRunners
+  - run4theh111z
+  
+6. Daedalus
 
-6. BitRunners
-
-7. Deadalus
-
-8. Illuminati
+7. Illuminati
