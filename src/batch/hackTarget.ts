@@ -92,6 +92,9 @@ export async function hackTarget(
       }
 
       // Calculate when this batch should start to avoid long waiting times
+      if (batchStartTime > new Date().getTime() + 40 * 60 * 1000) {
+        return;
+      }
 
       // Execute the batch
       ns.exec(

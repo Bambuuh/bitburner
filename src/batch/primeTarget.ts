@@ -56,7 +56,7 @@ export function primeTarget(
       TTL: Date.now() + weakenTime + baseDelay,
     };
   } else if (currMoney < maxMoney) {
-    let growThreadsRemaining = getGrowthThreads(ns, target);
+    let growThreadsRemaining = Math.ceil(getGrowthThreads(ns, target));
 
     let delay = 0;
 
@@ -69,9 +69,8 @@ export function primeTarget(
       const maxThreads = getMaxThreads(availableRam, growThreadsRemaining);
 
       if (maxThreads) {
-        const growThreads = Math.min(
-          maxThreads.growThreads,
-          growThreadsRemaining
+        const growThreads = Math.ceil(
+          Math.min(maxThreads.growThreads, growThreadsRemaining)
         );
 
         const securityIncrease = ns.growthAnalyzeSecurity(growThreads, target);

@@ -8,7 +8,7 @@ export async function main(ns: NS): Promise<void> {
   ns.disableLog("ALL");
   const primedServers: string[] = [];
   let serversBeingPrimed: PrimeCandidate[] = [];
-  let currentTarget = undefined;
+  let currentTarget = "n00dles";
   let nextBatchStart: number | undefined = new Date().getTime();
   let nextTargetCooldown = new Date().getTime();
   const tenMinutes = 1000 * 60 * 10;
@@ -48,7 +48,7 @@ export async function main(ns: NS): Promise<void> {
       primedServers,
       serversBeingPrimed,
       purchasedServers,
-      bestTarget,
+      currentTarget,
       nextBatchStart
     );
 
