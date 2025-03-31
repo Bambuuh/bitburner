@@ -31,7 +31,9 @@ export async function main(ns: NS): Promise<void> {
   const path = paths.get(target);
 
   if (path) {
-    ns.tprint(`Path to ${target}: ${path.join(" -> ")}`);
+    path.forEach((server) => {
+      ns.singularity.connect(server);
+    });
   } else {
     ns.tprint(`Could not determine path to ${target}.`);
   }

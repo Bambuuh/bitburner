@@ -5,6 +5,16 @@ export function getHackableServers(ns: NS, player: Player) {
   const serversToScan = ["home"];
   const hackableServers = [];
 
+  if (ns.hasTorRouter()) {
+    ns.singularity.purchaseProgram("BruteSSH.exe");
+    ns.singularity.purchaseProgram("FTPCrack.exe");
+    ns.singularity.purchaseProgram("HTTPWorm.exe");
+    ns.singularity.purchaseProgram("relaySMTP.exe");
+    ns.singularity.purchaseProgram("SQLInject.exe");
+  } else {
+    ns.singularity.purchaseTor();
+  }
+
   const hasBrute = ns.fileExists("BruteSSH.exe", "home");
   const hasFTP = ns.fileExists("FTPCrack.exe", "home");
   const hasWorm = ns.fileExists("HTTPWorm.exe", "home");

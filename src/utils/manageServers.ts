@@ -5,19 +5,24 @@ export function manageServers(ns: NS, player: Player, servers: string[]) {
   let money = player.money;
   const serverLimit = ns.getPurchasedServerLimit();
   let serverCount = servers.length;
+  const serverList = [...servers];
 
   if (serverCount < serverLimit) {
     while (money >= newServerCost && serverCount < serverLimit) {
-      const name = ns.purchaseServer(`server-${servers.length.toString()}`, 32);
+      const name = ns.purchaseServer(
+        `server-${serverList.length.toString()}`,
+        32
+      );
       if (name) {
         addScripts(ns, name);
         serverCount++;
         ns.tprint(`Purchased new server, new count ${serverCount}`);
         money -= newServerCost;
+        serverList.push(name);
       }
     }
   } else {
-    servers.forEach((server) => {
+    serverList.forEach((server) => {
       const maxRam = ns.getServerMaxRam(server);
       const didUpgrade = ns.upgradePurchasedServer(server, maxRam * 2);
       if (didUpgrade) {

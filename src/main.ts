@@ -41,6 +41,8 @@ export async function main(ns: NS): Promise<void> {
       nextTargetCooldown = new Date().getTime() + tenMinutes;
     }
 
+    ns.singularity.upgradeHomeRam();
+    ns.singularity.upgradeHomeCores();
     manageServers(ns, player, purchasedServers);
 
     nextBatchStart = await batchHandler(
