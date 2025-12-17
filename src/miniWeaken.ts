@@ -6,5 +6,7 @@ export async function main(ns: NS): Promise<void> {
 
   const availableRam = ns.getServerMaxRam("home") - ns.getServerUsedRam("home");
   const threads = Math.floor(availableRam / weakenCost);
-  ns.exec("weaken.js", "home", threads, target);
+  if (threads > 0) {
+    ns.exec("weaken.js", "home", threads, target);
+  }
 }
