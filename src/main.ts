@@ -1,59 +1,32 @@
 import { NS } from "@ns";
-import { batchHandler } from "/batch/batchHandler";
-import { getBestTarget } from "./bestHackTarget";
-import { getHackableServers } from "/utils/getHackableServers";
-import { manageServers } from "/utils/manageServers";
 
 export async function main(ns: NS): Promise<void> {
-  ns.disableLog("ALL");
-  const primedServers: string[] = [];
-  let serversBeingPrimed: PrimeCandidate[] = [];
-  let currentTarget = "n00dles";
-  let nextBatchStart: number | undefined = new Date().getTime();
-  let nextTargetCooldown = new Date().getTime();
-  const tenMinutes = 1000 * 60 * 10;
+  const target = "n00dles";
+  const buffer = 200;
+  let sleep = 1000;
 
   while (true) {
-    serversBeingPrimed = serversBeingPrimed.filter((prime) => {
-      if (prime.TTL <= Date.now()) {
-        return false;
-      }
-      return true;
-    });
-    const purchasedServers = ns.getPurchasedServers();
-    const player = ns.getPlayer();
+    const minSecurity = ns.getServerMinSecurityLevel(target);
+    const securityDiff = ns.getServerSecurityLevel(target) - minSecurity;
+    const maxMoney = ns.getServerMaxMoney(target);
+    const moneyDiff = maxMoney - ns.getServerMoneyAvailable(target);
 
-    const hackableServers = getHackableServers(ns, player);
-    const isAllServersSmall = purchasedServers.every(
-      (server) => ns.getServerMaxRam(server) < 128
-    );
-    const bestTarget = isAllServersSmall
-      ? "n00dles"
-      : getBestTarget(ns, hackableServers, player, purchasedServers) ??
-        "n00dles";
+    const weakenPower = ns.weakenAnalyze(1);
 
-    if (
-      currentTarget !== bestTarget &&
-      new Date().getTime() > nextTargetCooldown
-    ) {
-      ns.tprint(`New target ${bestTarget}`);
-      currentTarget = bestTarget;
-      nextTargetCooldown = new Date().getTime() + tenMinutes;
+    if (securityDiff > weakenPower) {
+      const weakenTime = ns.getWeakenTime(target);
+      ns.exec("miniWeaken.js", "home");
+      sleep = weakenTime + buffer;
+    } else if (moneyDiff > maxMoney * 0.1) {
+      const growTime = ns.getGrowTime(target);
+      ns.exec("miniGrow.js", "home");
+      sleep = growTime + buffer;
+    } else {
+      const hackTime = ns.getHackTime(target);
+      ns.exec("miniHack.js", "home");
+      sleep = hackTime + buffer;
     }
 
-    ns.singularity.upgradeHomeRam();
-    ns.singularity.upgradeHomeCores();
-    manageServers(ns, player, purchasedServers);
-
-    nextBatchStart = await batchHandler(
-      ns,
-      primedServers,
-      serversBeingPrimed,
-      purchasedServers,
-      currentTarget,
-      nextBatchStart
-    );
-
-    await ns.sleep(1000);
+    await ns.sleep(sleep);
   }
 }
