@@ -1,14 +1,27 @@
 import { NS } from "@ns";
-import { getUsableServers } from "./getUsableServers";
 
 export async function main(ns: NS): Promise<void> {
+  ns.rm("batchTarget.txt");
+  const canBatchCost = ns.getScriptRam("canBatch.js", "home");
+  let isBatching = false;
   while (true) {
+    const availableHomeRam =
+      ns.getServerMaxRam("home") - ns.getServerUsedRam("home");
+    if (canBatchCost < availableHomeRam) {
+      ns.exec("canBatch.js", "home");
+      await ns.sleep(100);
+      const target = ns.read("batchTarget.txt");
+      if (target) {
+        isBatching = true;
+      }
+    }
+
     ns.exec("hackServers.js", "home");
     await ns.sleep(100);
     ns.exec("copyScripts.js", "home");
     await ns.sleep(100);
-    ns.exec("buyServers.js", "home");
-    await ns.sleep(100);
+    // ns.exec("buyServers.js", "home");
+    // await ns.sleep(100);
     ns.exec("bestHackTarget.js", "home");
     await ns.sleep(100);
     ns.exec("miniHacker.js", "home");
