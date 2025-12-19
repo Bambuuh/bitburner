@@ -41,8 +41,7 @@ export async function main(ns: NS): Promise<void> {
     );
 
     for (const server of usableServers) {
-      let availableRam =
-        ns.getServerMaxRam(server) - ns.getServerUsedRam(server);
+      let availableRam = ns.getServerMaxRam(server);
       const possibleHackThreads = Math.floor(availableRam / hackCost);
       if (hackThreadsNeeded > 0 && possibleHackThreads > 0) {
         const threadsToUse = Math.min(hackThreadsNeeded, possibleHackThreads);

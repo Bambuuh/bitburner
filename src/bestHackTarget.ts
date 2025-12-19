@@ -26,13 +26,13 @@ export async function main(ns: NS) {
     const weakenTime = ns.getWeakenTime(server);
     const hackChance = ns.hackAnalyzeChance(server);
 
-    const x = getMaxHackValue(ns, player, server, mockedServer, maxRam);
+    const maxValue = getMaxHackValue(ns, player, server, mockedServer, maxRam);
 
     let moneyPerMs = 0;
 
-    if (x) {
+    if (maxValue) {
       const batchTime = 200 + weakenTime;
-      const moneyHacked = mockedServer.moneyAvailable * x.factor;
+      const moneyHacked = mockedServer.moneyAvailable * maxValue.factor;
       moneyPerMs = hackChance == 1 ? moneyHacked / batchTime : 0;
     }
 
