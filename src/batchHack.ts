@@ -10,6 +10,8 @@ type BatchItem = {
 
 export async function main(ns: NS): Promise<void> {
   const obj = ns.read("batchTarget.json");
+  const earliestStart = ns.read("nextBatchStart.txt");
+  const earliestStartTime = earliestStart ? parseInt(earliestStart, 10) : 0;
 
   if (!obj) {
     return;
@@ -58,6 +60,7 @@ export async function main(ns: NS): Promise<void> {
   let batchNumber = 0;
   const batches: BatchItem[] = [];
 
+  const batchBuffer = 100;
   const buffer = 40;
 
   const weakenHackDelay = 0;
@@ -141,8 +144,8 @@ export async function main(ns: NS): Promise<void> {
       growWeakenThreadsNeeded === 0
     ) {
       // run batch
-
-      const batchStartTime = Date.now() + batchNumber * 100;
+      const start = Math.max(Date.now(), earliestStartTime);
+      const batchStartTime = start + batchNumber * batchBuffer;
       batches.forEach((batch) => {
         ns.exec(
           batch.script,
@@ -155,6 +158,11 @@ export async function main(ns: NS): Promise<void> {
       });
     } else {
       canKeepBatching = false;
+      ns.write(
+        "nextBatchStart.txt",
+        (Date.now() + batchNumber * batchBuffer + buffer * 4).toString(),
+        "w"
+      );
     }
     batchNumber++;
   }

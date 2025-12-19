@@ -89,7 +89,7 @@ export async function main(ns: NS): Promise<void> {
         target,
         multiplier,
       };
-      ns.write("batchTarget.json", JSON.stringify(obj));
+      ns.write("batchTarget.json", JSON.stringify(obj), "w");
       return;
     }
     multiplier -= 0.01;
