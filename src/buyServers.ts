@@ -18,7 +18,7 @@ export async function main(ns: NS) {
       if (name) {
         addScripts(ns, name);
         serverCount++;
-        ns.tprint(`Purchased new server, new count ${serverCount}`);
+        // ns.tprint(`Purchased new server, new count ${serverCount}`);
         money -= newServerCost;
         serverList.push(name);
       }
@@ -27,9 +27,9 @@ export async function main(ns: NS) {
     serverList.forEach((server) => {
       const maxRam = ns.getServerMaxRam(server);
       const didUpgrade = ns.upgradePurchasedServer(server, maxRam * 2);
-      if (didUpgrade) {
-        ns.tprint(`Upgraded ${server} to ${maxRam * 2} RAM`);
-      }
+      // if (didUpgrade) {
+      //   ns.tprint(`Upgraded ${server} to ${maxRam * 2} RAM`);
+      // }
     });
   }
 }

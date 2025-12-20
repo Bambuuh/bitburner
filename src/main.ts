@@ -7,7 +7,12 @@ export async function main(ns: NS): Promise<void> {
   let isBatching = false;
   let target = "n00dles";
   while (true) {
-    let isPrimed = ns.read("primeTargetDone.txt") === "1";
+    let isPrimed = false;
+    const primeData = ns.read("primeTargetData.txt");
+    if (primeData) {
+      const parsedPrimeData = JSON.parse(primeData);
+      isPrimed = parsedPrimeData.status === "ready";
+    }
     const availableHomeRam =
       ns.getServerMaxRam("home") - ns.getServerUsedRam("home");
     const canRunCanBatch = canBatchCost < availableHomeRam;
@@ -24,13 +29,18 @@ export async function main(ns: NS): Promise<void> {
     if (obj) {
       const parsed = JSON.parse(obj);
       if (parsed.target !== target) {
-        isPrimed = false;
-        ns.rm("primeTargetDone.txt");
+        ns.exec("primeTarget2.js", "home");
+        await ns.sleep(100);
+        const primeData = ns.read("primeTargetData.txt");
+        if (primeData) {
+          const parsedPrimeData = JSON.parse(primeData);
+          isPrimed = parsedPrimeData.status === "ready";
+        }
+        ns.tprint(
+          `Using batch target: ${parsed.target} with multiplier: ${parsed.multiplier}`
+        );
       }
       target = parsed.target;
-      ns.print(
-        `Using batch target: ${parsed.target} with multiplier: ${parsed.multiplier}`
-      );
     }
 
     ns.exec("hackServers.js", "home");
@@ -53,7 +63,13 @@ export async function main(ns: NS): Promise<void> {
       if (isPrimed) {
         ns.exec("batchHack.js", "home");
       } else {
-        ns.exec("primeTarget.js", "home");
+        const primeDataStr = ns.read("primeTargetData.txt");
+        if (primeDataStr) {
+          const primeData: PrimeData = JSON.parse(primeDataStr);
+          if (primeData.endTime < Date.now()) {
+            ns.exec("primeTarget2.js", "home");
+          }
+        }
       }
     }
     await ns.sleep(1000);
