@@ -9,6 +9,7 @@ export async function main(ns: NS) {
     (server) =>
       server !== "home" &&
       !server.startsWith("server-") &&
+      ns.hackAnalyzeChance(server) === 1 &&
       ns.getServerRequiredHackingLevel(server) <= hackLevel / 2
   );
 
