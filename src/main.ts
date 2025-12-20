@@ -37,7 +37,7 @@ export async function main(ns: NS): Promise<void> {
     await ns.sleep(100);
     ns.exec("copyScripts.js", "home");
     await ns.sleep(100);
-    ns.exec("bestHackTarget.js", "home");
+    ns.exec("bestHackTarget2.js", "home");
     await ns.sleep(100);
 
     const bestTarget = ns.read("bestTarget.txt");
