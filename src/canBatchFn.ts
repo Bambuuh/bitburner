@@ -1,9 +1,12 @@
 import { NS } from "@ns";
 import { getUsableServers } from "./getUsableServers";
 
-export async function main(ns: NS): Promise<void> {
-  const target = (ns.args[0] as string) ?? "n00dles";
+export function canBatch(ns: NS, target: string) {
   const maxMoney = ns.getServerMaxMoney(target);
+
+  if (maxMoney === 0) {
+    return;
+  }
 
   const usableServers = getUsableServers(ns);
 
@@ -42,6 +45,9 @@ export async function main(ns: NS): Promise<void> {
 
     for (const server of usableServers) {
       let availableRam = ns.getServerMaxRam(server);
+      if (server === "home") {
+        availableRam -= 10;
+      }
       const possibleHackThreads = Math.floor(availableRam / hackCost);
       if (hackThreadsNeeded > 0 && possibleHackThreads > 0) {
         const threadsToUse = Math.min(hackThreadsNeeded, possibleHackThreads);
@@ -84,15 +90,13 @@ export async function main(ns: NS): Promise<void> {
       hackWeakenThreadsNeeded === 0 &&
       growWeakenThreadsNeeded === 0
     ) {
-      const obj = {
+      return {
         target,
         multiplier,
       };
-      ns.write("batchTarget.json", JSON.stringify(obj), "w");
-      return;
     }
     multiplier -= 0.01;
   }
 
-  ns.rm("batchTarget.txt");
+  return;
 }

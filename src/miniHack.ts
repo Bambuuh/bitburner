@@ -2,7 +2,8 @@ import { NS } from "@ns";
 import { getUsableServers } from "./getUsableServers";
 
 export async function main(ns: NS): Promise<void> {
-  const target = ns.read("bestTarget.txt");
+  // const target = ns.read("bestTarget.txt");
+  const target = "n00dles";
   const hackCost = ns.getScriptRam("hack.js");
   const usableServers = getUsableServers(ns);
 

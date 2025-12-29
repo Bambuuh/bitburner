@@ -1,7 +1,8 @@
 import { NS } from "@ns";
 
 export async function main(ns: NS): Promise<void> {
-  const target = ns.read("bestTarget.txt");
+  // const target = ns.read("bestTarget.txt");
+  const target = "n00dles";
   const minSecurity = ns.getServerMinSecurityLevel(target);
   const securityDiff = ns.getServerSecurityLevel(target) - minSecurity;
   const maxMoney = ns.getServerMaxMoney(target);
@@ -12,11 +13,15 @@ export async function main(ns: NS): Promise<void> {
   const isNotWeakEnough = securityDiff > weakenPower;
   const isNotRichEnough = moneyDiff > maxMoney * 0.1;
 
-  if (isNotWeakEnough) {
-    ns.exec("miniWeaken.js", "home");
-  } else if (isNotRichEnough) {
-    ns.exec("miniGrow.js", "home");
-  } else if (!isNotWeakEnough && !isNotRichEnough) {
+  if (isNotWeakEnough || isNotRichEnough) {
+    const primeData = ns.read("primeTargetData.txt");
+    const parsedPrimeData: PrimeData | null = primeData
+      ? JSON.parse(primeData)
+      : null;
+    if (!parsedPrimeData || parsedPrimeData.endTime < Date.now()) {
+      ns.exec("primeTarget2.js", "home", {}, target);
+    }
+  } else {
     ns.exec("miniHack.js", "home");
   }
 }

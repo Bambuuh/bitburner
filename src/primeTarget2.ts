@@ -2,7 +2,10 @@ import { NS } from "@ns";
 import { getUsableServers } from "./getUsableServers";
 
 export async function main(ns: NS): Promise<void> {
-  const target = ns.read("bestTarget.txt");
+  const target =
+    (ns.args[0] as string) !== ""
+      ? (ns.args[0] as string)
+      : ns.read("bestTarget.txt");
   const minSecurity = ns.getServerMinSecurityLevel(target);
   const serverSecurity = ns.getServerSecurityLevel(target);
   const maxMoney = ns.getServerMaxMoney(target);

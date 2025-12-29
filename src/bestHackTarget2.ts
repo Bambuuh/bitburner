@@ -1,4 +1,5 @@
 import { NS } from "@ns";
+import { canBatch } from "./canBatchFn";
 import { getUsableServers } from "./getUsableServers";
 
 export async function main(ns: NS) {
@@ -9,7 +10,7 @@ export async function main(ns: NS) {
     (server) =>
       server !== "home" &&
       !server.startsWith("server-") &&
-      ns.hackAnalyzeChance(server) === 1 &&
+      ns.hackAnalyzeChance(server) > 0.8 &&
       ns.getServerRequiredHackingLevel(server) <= hackLevel / 2
   );
 
@@ -20,8 +21,11 @@ export async function main(ns: NS) {
   const scores = [];
 
   for (const server of hackableServers) {
-    const score = ns.getServerMaxMoney(server) / ns.getWeakenTime(server);
-    scores.push({ server, score });
+    const batchData = canBatch(ns, server);
+    if (batchData || server === "n00dles") {
+      const score = ns.getServerMaxMoney(server) / ns.getWeakenTime(server);
+      scores.push({ server, score });
+    }
   }
 
   scores.sort((a, b) => b.score - a.score);

@@ -60,13 +60,13 @@ export async function main(ns: NS): Promise<void> {
   let batchNumber = 0;
   const batches: BatchItem[] = [];
 
-  const batchBuffer = 100;
   const buffer = 40;
+  const batchBuffer = buffer * 4;
 
   const weakenHackDelay = 0;
   const hackDelay = weakenTime - hackTime - buffer;
   const growDelay = weakenTime - growTime + buffer;
-  const growWeakenDelay = buffer * 3;
+  const growWeakenDelay = buffer * 2;
 
   while (canKeepBatching) {
     let hackThreadsNeeded = baseHackThreadsNeeded;
@@ -143,7 +143,6 @@ export async function main(ns: NS): Promise<void> {
       hackWeakenThreadsNeeded === 0 &&
       growWeakenThreadsNeeded === 0
     ) {
-      // run batch
       const start = Math.max(Date.now(), earliestStartTime);
       const batchStartTime = start + batchNumber * batchBuffer;
       batches.forEach((batch) => {
@@ -158,9 +157,10 @@ export async function main(ns: NS): Promise<void> {
       });
     } else {
       canKeepBatching = false;
+      const start = Math.max(Date.now(), earliestStartTime);
       ns.write(
         "nextBatchStart.txt",
-        (Date.now() + batchNumber * batchBuffer + buffer * 4).toString(),
+        (start + batchNumber * batchBuffer).toString(),
         "w"
       );
     }
