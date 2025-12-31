@@ -66,18 +66,22 @@ export async function main(ns: NS): Promise<void> {
     };
 
     while (isTesting) {
+      const weakenThreadsNeeded = Math.ceil(
+        (growThreads * growSecurityIncreasePerThread) / weakenPerThread
+      );
       let growRemaining = growThreads;
-      let weakenRemaining = growThreads * weakenThreadsPerGrow;
+      let weakenRemaining = weakenThreadsNeeded;
 
       for (const server of servers) {
-        const availableRam =
+        let availableRam =
           ns.getServerMaxRam(server) - ns.getServerUsedRam(server);
         const possibleGrowThreads = Math.floor(availableRam / growCost);
-        const possibleWeakenThreads = Math.floor(availableRam / weakenCost);
         if (growRemaining > 0 && possibleGrowThreads > 0) {
           const threadsToUse = Math.min(growRemaining, possibleGrowThreads);
           growRemaining -= threadsToUse;
+          availableRam -= threadsToUse * growCost;
         }
+        const possibleWeakenThreads = Math.floor(availableRam / weakenCost);
         if (weakenRemaining > 0 && possibleWeakenThreads > 0) {
           const threadsToUse = Math.min(weakenRemaining, possibleWeakenThreads);
           weakenRemaining -= threadsToUse;
@@ -90,7 +94,7 @@ export async function main(ns: NS): Promise<void> {
       if (growRemaining <= 0 && weakenRemaining <= 0) {
         highestPossible = {
           growThreads,
-          weakenThreads: growThreads * weakenThreadsPerGrow,
+          weakenThreads: weakenThreadsNeeded,
         };
 
         if (growThreads >= growThreadsNeeded) {
@@ -112,15 +116,16 @@ export async function main(ns: NS): Promise<void> {
       const weakenStartTIme = Date.now();
 
       for (const server of servers) {
-        const availableRam =
+        let availableRam =
           ns.getServerMaxRam(server) - ns.getServerUsedRam(server);
         const possibleGrowThreads = Math.floor(availableRam / growCost);
-        const possibleWeakenThreads = Math.floor(availableRam / weakenCost);
         if (growRemaining > 0 && possibleGrowThreads > 0) {
           const threadsToUse = Math.min(growRemaining, possibleGrowThreads);
           ns.exec("grow.js", server, threadsToUse, target, 0, growStartTime);
           growRemaining -= threadsToUse;
+          availableRam -= threadsToUse * growCost;
         }
+        const possibleWeakenThreads = Math.floor(availableRam / weakenCost);
         if (weakenRemaining > 0 && possibleWeakenThreads > 0) {
           const threadsToUse = Math.min(weakenRemaining, possibleWeakenThreads);
           ns.exec(
