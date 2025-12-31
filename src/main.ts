@@ -1,4 +1,5 @@
 import { NS } from "@ns";
+import { printServers } from "./printServers";
 
 export async function main(ns: NS): Promise<void> {
   ns.rm("batchTarget.json");
@@ -6,17 +7,16 @@ export async function main(ns: NS): Promise<void> {
   ns.rm("primeTargetData.txt");
   ns.rm("nextBatchStart.txt");
   ns.rm("bestTarget.txt");
+  ns.disableLog("ALL");
   const canBatchCost = ns.getScriptRam("canBatch.js", "home");
   let isBatching = false;
   let target = "n00dles";
   while (true) {
     ns.exec("hackServers.js", "home");
-    await ns.sleep(100);
     ns.exec("copyScripts.js", "home");
-    await ns.sleep(100);
     ns.exec("buyServers.js", "home");
-    await ns.sleep(100);
-
+    ns.clearLog();
+    printServers(ns);
     let isPrimed = false;
     const primeData = ns.read("primeTargetData.txt");
     if (primeData) {
@@ -28,7 +28,6 @@ export async function main(ns: NS): Promise<void> {
     const canRunCanBatch = canBatchCost < availableHomeRam;
     if (!isBatching && canRunCanBatch) {
       ns.exec("canBatchMain.js", "home");
-      await ns.sleep(100);
       const obj = ns.read("batchTarget.json");
       if (obj) {
         isBatching = true;
@@ -43,7 +42,6 @@ export async function main(ns: NS): Promise<void> {
         if (parsed.target !== target || primeDataStr === "") {
           ns.exec("primeTarget2.js", "home", {}, parsed.target);
           const primeData = ns.read("primeTargetData.txt");
-          await ns.sleep(100);
           if (primeData) {
             const parsedPrimeData = JSON.parse(primeData);
             isPrimed = parsedPrimeData.status === "ready";
@@ -57,7 +55,6 @@ export async function main(ns: NS): Promise<void> {
     }
 
     ns.exec("bestHackTarget2.js", "home");
-    await ns.sleep(100);
 
     const bestTarget = ns.read("bestTarget.txt");
 
@@ -65,11 +62,15 @@ export async function main(ns: NS): Promise<void> {
       ns.exec("canBatchMain.js", "home", {}, bestTarget);
     }
     if (!isBatching) {
+      ns.print("Target: n00dles");
       ns.exec("miniHacker.js", "home");
     } else {
+      ns.print("Target: " + target);
       if (isPrimed) {
+        ns.print("Status: hacking");
         ns.exec("batchHack.js", "home");
       } else {
+        ns.print("Status: priming");
         const primeDataStr = ns.read("primeTargetData.txt");
         if (primeDataStr) {
           const primeData: PrimeData = JSON.parse(primeDataStr);

@@ -6,13 +6,15 @@ export async function main(ns: NS) {
   const usableServers = getUsableServers(ns);
   const hackLevel = ns.getHackingLevel();
 
-  const hackableServers = usableServers.filter(
-    (server) =>
+  const hackableServers = usableServers.filter((server) => {
+    const requiredHackLevel = ns.getServerRequiredHackingLevel(server);
+
+    return (
       server !== "home" &&
       !server.startsWith("server-") &&
-      ns.hackAnalyzeChance(server) > 0.8 &&
-      ns.getServerRequiredHackingLevel(server) <= hackLevel / 2
-  );
+      requiredHackLevel <= hackLevel / 2
+    );
+  });
 
   if (hackableServers.length === 0) {
     hackableServers.push("n00dles");
@@ -23,7 +25,9 @@ export async function main(ns: NS) {
   for (const server of hackableServers) {
     const batchData = canBatch(ns, server);
     if (batchData || server === "n00dles") {
-      const score = ns.getServerMaxMoney(server) / ns.getWeakenTime(server);
+      const score =
+        (ns.getServerMaxMoney(server) * ns.hackAnalyzeChance(server)) /
+        ns.getWeakenTime(server);
       scores.push({ server, score });
     }
   }
