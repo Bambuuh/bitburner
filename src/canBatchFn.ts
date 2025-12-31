@@ -1,10 +1,12 @@
 import { NS } from "@ns";
+import { getMockServer } from "./getMockServer";
 import { getUsableServers } from "./getUsableServers";
 
 export function canBatch(ns: NS, target: string) {
-  const maxMoney = ns.getServerMaxMoney(target);
+  const moneyMax = ns.getServerMaxMoney(target);
+  const player = ns.getPlayer();
 
-  if (maxMoney === 0) {
+  if (moneyMax === 0) {
     return;
   }
 
@@ -18,16 +20,31 @@ export function canBatch(ns: NS, target: string) {
 
   let multiplier = 0.5;
 
+  const mockPrimedServer = getMockServer(ns, target);
+
+  const hackPercentPerThread = ns.formulas.hacking.hackPercent(
+    mockPrimedServer,
+    player
+  );
+
   while (multiplier > 0.01) {
-    const targetMoney = maxMoney * multiplier;
+    const mockHackedServer = getMockServer(ns, target, {
+      hackedMoneyMult: multiplier,
+    });
+
     let hackThreadsNeeded = Math.max(
       1,
-      Math.floor(ns.hackAnalyzeThreads(target, targetMoney))
+      Math.floor(multiplier / hackPercentPerThread)
     );
-    let growThreadsNeeded = Math.max(
-      1,
-      Math.ceil(ns.growthAnalyze(target, maxMoney / targetMoney))
+
+    let growThreadsNeeded = Math.ceil(
+      ns.formulas.hacking.growThreads(
+        mockHackedServer,
+        player,
+        mockHackedServer.moneyMax ?? 1
+      )
     );
+
     const hackSecurityIncrease = ns.hackAnalyzeSecurity(
       hackThreadsNeeded,
       target
@@ -36,6 +53,7 @@ export function canBatch(ns: NS, target: string) {
       growThreadsNeeded,
       target
     );
+
     let hackWeakenThreadsNeeded = Math.ceil(
       hackSecurityIncrease / weakenPerThread
     );
