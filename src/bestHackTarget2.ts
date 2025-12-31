@@ -1,18 +1,21 @@
 import { NS } from "@ns";
 import { canBatch } from "./canBatchFn";
+import { getMockServer } from "./getMockServer";
 import { getUsableServers } from "./getUsableServers";
 
 export async function main(ns: NS) {
   const usableServers = getUsableServers(ns);
-  const hackLevel = ns.getHackingLevel();
+  const player = ns.getPlayer();
 
   const hackableServers = usableServers.filter((server) => {
     const requiredHackLevel = ns.getServerRequiredHackingLevel(server);
+    const mockServer = getMockServer(ns, server);
 
     return (
       server !== "home" &&
       !server.startsWith("server-") &&
-      requiredHackLevel <= hackLevel / 2
+      requiredHackLevel <= player.skills.hacking &&
+      ns.formulas.hacking.hackChance(mockServer, player) === 1
     );
   });
 
@@ -24,10 +27,12 @@ export async function main(ns: NS) {
 
   for (const server of hackableServers) {
     const batchData = canBatch(ns, server);
+    const mockServer = getMockServer(ns, server);
     if (batchData || server === "n00dles") {
       const score =
-        (ns.getServerMaxMoney(server) * ns.hackAnalyzeChance(server)) /
-        ns.getWeakenTime(server);
+        ((mockServer.moneyMax ?? 1) *
+          ns.formulas.hacking.hackChance(mockServer, player)) /
+        ns.formulas.hacking.weakenTime(mockServer, player);
       scores.push({ server, score });
     }
   }

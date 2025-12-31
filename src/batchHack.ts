@@ -1,4 +1,5 @@
 import { NS } from "@ns";
+import { getMockServer } from "./getMockServer";
 import { getUsableServers } from "./getUsableServers";
 
 type BatchItem = {
@@ -19,27 +20,39 @@ export async function main(ns: NS): Promise<void> {
 
   const { target, multiplier } = JSON.parse(obj);
 
-  const maxMoney = ns.getServerMaxMoney(target);
+  const mockServer = getMockServer(ns, target);
+  const player = ns.getPlayer();
 
   const usableServers = getUsableServers(ns);
 
   const weakenCost = ns.getScriptRam("weaken.js");
   const hackCost = ns.getScriptRam("hack.js");
   const growCost = ns.getScriptRam("grow.js");
-  const weakenTime = ns.getWeakenTime(target);
-  const hackTime = ns.getHackTime(target);
-  const growTime = ns.getGrowTime(target);
+  const weakenTime = ns.formulas.hacking.weakenTime(mockServer, player);
+  const hackTime = ns.formulas.hacking.hackTime(mockServer, player);
+  const growTime = ns.formulas.hacking.growTime(mockServer, player);
 
   const weakenPerThread = ns.weakenAnalyze(1);
 
-  const targetMoney = maxMoney * multiplier;
+  const hackPercentPerThread = ns.formulas.hacking.hackPercent(
+    mockServer,
+    player
+  );
+
+  const mockHackedServer = getMockServer(ns, target, {
+    hackedMoneyMult: multiplier,
+  });
+
   const baseHackThreadsNeeded = Math.max(
     1,
-    Math.floor(ns.hackAnalyzeThreads(target, targetMoney))
+    Math.floor(multiplier / hackPercentPerThread)
   );
-  const baseGrowThreadsNeeded = Math.max(
-    1,
-    Math.ceil(ns.growthAnalyze(target, maxMoney / targetMoney))
+  const baseGrowThreadsNeeded = Math.ceil(
+    ns.formulas.hacking.growThreads(
+      mockHackedServer,
+      player,
+      mockHackedServer.moneyMax ?? 1
+    )
   );
   const hackSecurityIncrease = ns.hackAnalyzeSecurity(
     baseHackThreadsNeeded,
