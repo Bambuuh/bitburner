@@ -1,59 +1,58 @@
 import { NS } from "@ns";
 import { ceasar } from "./contracts/ceasar";
+import { squareRoot } from "./contracts/squareRoot";
 import { hammingCodes } from "/contracts/hammingCodes";
 
 export async function main(ns: NS) {
   const visited = new Set();
 
-  // Recursive function to explore servers
-  function findContracts(server: string) {
-    // Skip if we've already visited this server
-    if (visited.has(server)) return;
+  function attempt(res: string, contract: string, server: string) {
+    const reward = ns.codingcontract.attempt(res, contract, server);
+    if (reward.length > 0) {
+      ns.tprint("REWARD", reward);
+    } else {
+      ns.tprint("FAIL", reward);
+    }
+  }
 
-    // Mark server as visited
+  function findContracts(server: string) {
+    if (visited.has(server)) {
+      return;
+    }
+
     visited.add(server);
 
-    // Check for contracts on this server
     const contracts = ns.ls(server, ".cct");
     if (contracts.length > 0) {
       ns.tprint(`Contracts found on ${server}:`);
       for (const contract of contracts) {
+        const contractType = ns.codingcontract.getContractType(
+          contract,
+          server
+        );
         ns.tprint(`- ${contract}`);
-        ns.tprint(`- ${ns.codingcontract.getContractType(contract, server)}`);
+        ns.tprint(`- ${contractType}`);
         const data = ns.codingcontract.getData(contract, server);
-        if (
-          ns.codingcontract.getContractType(contract, server) ===
-          "HammingCodes: Encoded Binary to Integer"
-        ) {
-          const res = hammingCodes(data);
-          ns.tprint(data);
-          ns.tprint(res);
-          // const reward = ns.codingcontract.attempt(res, contract, server);
-          // if (reward.length > 0) {
-          //   ns.tprint("REWARD", reward);
-          // } else {
-          //   ns.tprint("FAIL", reward);
-          // }
+        if (contractType === "HammingCodes: Encoded Binary to Integer") {
+          // const res = hammingCodes(data);
+          // attempt(res, contract, server);
         }
-        if (
-          ns.codingcontract.getContractType(contract, server) ===
-          "Encryption I: Caesar Cipher"
-        ) {
+        if (contractType === "Encryption I: Caesar Cipher") {
           const res = ceasar(data[0], data[1]);
-          const reward = ns.codingcontract.attempt(res, contract, server);
-          if (reward.length > 0) {
-            ns.tprint("REWARD", reward);
-          } else {
-            ns.tprint("FAIL", reward);
-          }
+          attempt(res, contract, server);
+        }
+        if (contractType === "Square Root") {
+          const res = squareRoot(data);
+          // attempt(String(res), contract, server);
+        }
+        if (contractType === "Total Ways to Sum II") {
+          // TODO: implement Total Ways to Sum II contract solver
         }
       }
     }
 
-    // Get all connected servers
     const connectedServers = ns.scan(server);
 
-    // Recursively explore each connected server
     for (const connectedServer of connectedServers) {
       if (!visited.has(connectedServer)) {
         findContracts(connectedServer);
@@ -61,6 +60,5 @@ export async function main(ns: NS) {
     }
   }
 
-  // Start the recursive search from home
   findContracts("home");
 }
