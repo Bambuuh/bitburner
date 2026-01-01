@@ -37,6 +37,7 @@ export async function main(ns: NS): Promise<void> {
       const obj = ns.read("batchTarget.json");
       if (obj) {
         isBatching = true;
+        ns.rm("batchTarget.json");
       }
     }
 
