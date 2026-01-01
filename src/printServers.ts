@@ -15,6 +15,7 @@ export function printServers(ns: NS) {
       highestServerRam = serverRam;
     }
   });
-  ns.print(`Lowest server RAM: ${lowestServerRam}`);
-  ns.print(`Highest server RAM: ${highestServerRam}`);
+  ns.print(`Server count: ${servers.length}`);
+  ns.print(`Lowest server RAM: ${lowestServerRam}GB`);
+  ns.print(`Highest server RAM: ${highestServerRam}GB`);
 }
