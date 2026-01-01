@@ -2,9 +2,10 @@ import { NS } from "@ns";
 import { getUsableServers } from "./getUsableServers";
 
 export async function main(ns: NS): Promise<void> {
+  const argsTarget = ns.args[0] as string | undefined;
   const target =
-    (ns.args[0] as string) !== ""
-      ? (ns.args[0] as string)
+    argsTarget !== undefined && argsTarget !== ""
+      ? argsTarget
       : ns.read("bestTarget.txt");
   const minSecurity = ns.getServerMinSecurityLevel(target);
   const serverSecurity = ns.getServerSecurityLevel(target);
@@ -47,9 +48,16 @@ export async function main(ns: NS): Promise<void> {
     }
   } else if (moneyDiff > 0) {
     const multiplierNeeded = maxMoney / currentMoney;
+    const mockServer = {
+      ...ns.getServer(target),
+      hackDifficulty: minSecurity, // already at min since we're in the else branch
+      moneyAvailable: currentMoney,
+      moneyMax: maxMoney,
+    };
     const growThreadsNeeded = Math.ceil(
-      ns.growthAnalyze(target, multiplierNeeded)
+      ns.formulas.hacking.growThreads(mockServer, ns.getPlayer(), maxMoney)
     );
+
     const growSecurityIncreasePerThread = ns.growthAnalyzeSecurity(1);
     const weakenPerThread = ns.weakenAnalyze(1);
 

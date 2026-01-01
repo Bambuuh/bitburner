@@ -11,7 +11,7 @@ export function getMockServer(
   const moneyMax = ns.getServerMaxMoney(hostname);
   let moneyAvailable = moneyMax;
   if (mocks?.hackedMoneyMult) {
-    moneyAvailable = moneyMax * mocks.hackedMoneyMult;
+    moneyAvailable = moneyMax * (1 - mocks.hackedMoneyMult);
   }
   const minsec = ns.getServerMinSecurityLevel(hostname);
 

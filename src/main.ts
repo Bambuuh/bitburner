@@ -6,6 +6,7 @@ export async function main(ns: NS): Promise<void> {
   ns.rm("primeTargetDone.txt");
   ns.rm("primeTargetData.txt");
   ns.rm("nextBatchStart.txt");
+  ns.rm("nextBatchEnd.txt");
   ns.rm("bestTarget.txt");
   ns.disableLog("ALL");
   const canBatchCost = ns.getScriptRam("canBatch.js", "home");

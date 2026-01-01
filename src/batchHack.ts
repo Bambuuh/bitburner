@@ -2,17 +2,21 @@ import { NS } from "@ns";
 import { getMockServer } from "./getMockServer";
 import { getUsableServers } from "./getUsableServers";
 
+type Operation = "hack" | "grow" | "hackWeaken" | "growWeaken";
+
 type BatchItem = {
   host: string;
   script: string;
   threads: number;
-  delay: number;
+  operation: Operation;
 };
 
 export async function main(ns: NS): Promise<void> {
   const obj = ns.read("batchTarget.json");
-  const earliestStart = ns.read("nextBatchStart.txt");
-  const earliestStartTime = earliestStart ? parseInt(earliestStart, 10) : 0;
+  const previousBatchEnd = ns.read("nextBatchEnd.txt");
+  const earliestStartTime = previousBatchEnd
+    ? parseInt(previousBatchEnd, 10) + 40
+    : 0;
 
   if (!obj) {
     return;
@@ -29,8 +33,6 @@ export async function main(ns: NS): Promise<void> {
   const hackCost = ns.getScriptRam("hack.js");
   const growCost = ns.getScriptRam("grow.js");
   const weakenTime = ns.formulas.hacking.weakenTime(mockServer, player);
-  const hackTime = ns.formulas.hacking.hackTime(mockServer, player);
-  const growTime = ns.formulas.hacking.growTime(mockServer, player);
 
   const weakenPerThread = ns.weakenAnalyze(1);
 
@@ -67,14 +69,10 @@ export async function main(ns: NS): Promise<void> {
 
   let canKeepBatching = true;
   let batchNumber = 0;
+  let lastBatchEndTime = 0;
 
   const buffer = 40;
   const batchBuffer = buffer * 4;
-
-  const weakenHackDelay = 0;
-  const hackDelay = weakenTime - hackTime - buffer;
-  const growDelay = weakenTime - growTime + buffer;
-  const growWeakenDelay = buffer * 2;
 
   while (canKeepBatching) {
     let hackThreadsNeeded = baseHackThreadsNeeded;
@@ -95,7 +93,7 @@ export async function main(ns: NS): Promise<void> {
           host: server,
           script: "hack.js",
           threads: threadsToUse,
-          delay: hackDelay,
+          operation: "hack",
         });
       }
 
@@ -109,7 +107,7 @@ export async function main(ns: NS): Promise<void> {
           host: server,
           script: "grow.js",
           threads: threadsToUse,
-          delay: growDelay,
+          operation: "grow",
         });
       }
 
@@ -125,7 +123,7 @@ export async function main(ns: NS): Promise<void> {
           host: server,
           script: "weaken.js",
           threads: threadsToUse,
-          delay: weakenHackDelay,
+          operation: "hackWeaken",
         });
       }
 
@@ -141,7 +139,7 @@ export async function main(ns: NS): Promise<void> {
           host: server,
           script: "weaken.js",
           threads: threadsToUse,
-          delay: growWeakenDelay,
+          operation: "growWeaken",
         });
       }
 
@@ -163,25 +161,36 @@ export async function main(ns: NS): Promise<void> {
     ) {
       const start = Math.max(Date.now(), earliestStartTime);
       const batchStartTime = start + batchNumber * batchBuffer;
+      const hackWeakenLandTime = batchStartTime + weakenTime;
+      const hackLandTime = hackWeakenLandTime - buffer;
+      const growLandTime = hackWeakenLandTime + buffer;
+      const growWeakenLandTime = growLandTime + buffer;
+
+      const landTimes: Record<Operation, number> = {
+        hack: hackLandTime,
+        grow: growLandTime,
+        hackWeaken: hackWeakenLandTime,
+        growWeaken: growWeakenLandTime,
+      };
+
       currentBatch.forEach((batch) => {
         ns.exec(
           batch.script,
           batch.host,
           batch.threads,
           target,
-          batch.delay,
-          batchStartTime
+          landTimes[batch.operation]
         );
       });
+
+      lastBatchEndTime = growWeakenLandTime;
     } else {
       canKeepBatching = false;
-      const start = Math.max(Date.now(), earliestStartTime);
-      ns.write(
-        "nextBatchStart.txt",
-        (start + batchNumber * batchBuffer).toString(),
-        "w"
-      );
     }
     batchNumber++;
+  }
+
+  if (lastBatchEndTime > 0) {
+    ns.write("nextBatchEnd.txt", lastBatchEndTime.toString(), "w");
   }
 }
