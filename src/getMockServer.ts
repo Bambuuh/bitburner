@@ -5,6 +5,7 @@ export function getMockServer(
   hostname: string,
   mocks?: {
     hackedMoneyMult?: number;
+    moneyAvailable?: number;
   }
 ): Server {
   const server = ns.getServer(hostname);

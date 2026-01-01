@@ -1,4 +1,5 @@
 import { NS } from "@ns";
+import { getMockServer } from "./getMockServer";
 import { getUsableServers } from "./getUsableServers";
 
 export async function main(ns: NS): Promise<void> {
@@ -10,13 +11,12 @@ export async function main(ns: NS): Promise<void> {
   const minSecurity = ns.getServerMinSecurityLevel(target);
   const serverSecurity = ns.getServerSecurityLevel(target);
   const maxMoney = ns.getServerMaxMoney(target);
-  const currentMoney = ns.getServerMoneyAvailable(target);
+  const currentMoney = Math.floor(ns.getServerMoneyAvailable(target));
   const moneyDiff = maxMoney - currentMoney;
   const servers = getUsableServers(ns);
   const weakenCost = ns.getScriptRam("weaken.js");
   const growCost = ns.getScriptRam("grow.js");
   const weakenTime = ns.getWeakenTime(target);
-  const growTime = ns.getGrowTime(target);
 
   const weakenDiff = serverSecurity - minSecurity;
 
@@ -47,23 +47,15 @@ export async function main(ns: NS): Promise<void> {
       }
     }
   } else if (moneyDiff > 0) {
-    const multiplierNeeded = maxMoney / currentMoney;
-    const mockServer = {
-      ...ns.getServer(target),
-      hackDifficulty: minSecurity, // already at min since we're in the else branch
+    const mockServer = getMockServer(ns, target, {
       moneyAvailable: currentMoney,
-      moneyMax: maxMoney,
-    };
+    });
     const growThreadsNeeded = Math.ceil(
       ns.formulas.hacking.growThreads(mockServer, ns.getPlayer(), maxMoney)
     );
 
     const growSecurityIncreasePerThread = ns.growthAnalyzeSecurity(1);
     const weakenPerThread = ns.weakenAnalyze(1);
-
-    const weakenThreadsPerGrow = Math.ceil(
-      growSecurityIncreasePerThread / weakenPerThread
-    );
 
     let growThreads = 1;
     let isTesting = true;
@@ -120,8 +112,11 @@ export async function main(ns: NS): Promise<void> {
       let growRemaining = highestPossible.growThreads;
       let weakenRemaining = highestPossible.weakenThreads;
 
-      const growStartTime = Date.now() + weakenTime - growTime - 40;
-      const weakenStartTIme = Date.now();
+      // const growStartTime = Date.now() + weakenTime - growTime - 40;
+      // const weakenStartTIme = Date.now();
+
+      const weakenEndTime = Date.now() + weakenTime;
+      const growEndTime = weakenEndTime - 40;
 
       for (const server of servers) {
         let availableRam =
@@ -129,25 +124,18 @@ export async function main(ns: NS): Promise<void> {
         const possibleGrowThreads = Math.floor(availableRam / growCost);
         if (growRemaining > 0 && possibleGrowThreads > 0) {
           const threadsToUse = Math.min(growRemaining, possibleGrowThreads);
-          ns.exec("grow.js", server, threadsToUse, target, 0, growStartTime);
+          ns.exec("grow.js", server, threadsToUse, target, growEndTime);
           growRemaining -= threadsToUse;
           availableRam -= threadsToUse * growCost;
         }
         const possibleWeakenThreads = Math.floor(availableRam / weakenCost);
         if (weakenRemaining > 0 && possibleWeakenThreads > 0) {
           const threadsToUse = Math.min(weakenRemaining, possibleWeakenThreads);
-          ns.exec(
-            "weaken.js",
-            server,
-            threadsToUse,
-            target,
-            0,
-            weakenStartTIme
-          );
+          ns.exec("weaken.js", server, threadsToUse, target, weakenEndTime);
           weakenRemaining -= threadsToUse;
         }
         if (weakenRemaining <= 0 && growRemaining <= 0) {
-          primeEndTime = Date.now() + weakenTime + 100;
+          primeEndTime = weakenEndTime + 100;
           break;
         }
       }
