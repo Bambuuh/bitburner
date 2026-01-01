@@ -54,13 +54,9 @@ export async function main(ns: NS): Promise<void> {
       mockHackedServer.moneyMax ?? 1
     )
   );
-  const hackSecurityIncrease = ns.hackAnalyzeSecurity(
-    baseHackThreadsNeeded,
-    target
-  );
+  const hackSecurityIncrease = ns.hackAnalyzeSecurity(baseHackThreadsNeeded);
   const growthSecurityIncrease = ns.growthAnalyzeSecurity(
-    baseGrowThreadsNeeded,
-    target
+    baseGrowThreadsNeeded
   );
   const baseHackWeakenThreadsNeeded = Math.ceil(
     hackSecurityIncrease / weakenPerThread
@@ -71,7 +67,6 @@ export async function main(ns: NS): Promise<void> {
 
   let canKeepBatching = true;
   let batchNumber = 0;
-  const batches: BatchItem[] = [];
 
   const buffer = 40;
   const batchBuffer = buffer * 4;
@@ -86,6 +81,7 @@ export async function main(ns: NS): Promise<void> {
     let growThreadsNeeded = baseGrowThreadsNeeded;
     let hackWeakenThreadsNeeded = baseHackWeakenThreadsNeeded;
     let growWeakenThreadsNeeded = baseGrowWeakenThreadsNeeded;
+    const currentBatch: BatchItem[] = [];
 
     for (const server of usableServers) {
       let availableRam =
@@ -95,7 +91,7 @@ export async function main(ns: NS): Promise<void> {
         const threadsToUse = Math.min(hackThreadsNeeded, possibleHackThreads);
         hackThreadsNeeded -= threadsToUse;
         availableRam -= threadsToUse * hackCost;
-        batches.push({
+        currentBatch.push({
           host: server,
           script: "hack.js",
           threads: threadsToUse,
@@ -109,7 +105,7 @@ export async function main(ns: NS): Promise<void> {
         const threadsToUse = Math.min(growThreadsNeeded, possibleGrowThreads);
         growThreadsNeeded -= threadsToUse;
         availableRam -= threadsToUse * growCost;
-        batches.push({
+        currentBatch.push({
           host: server,
           script: "grow.js",
           threads: threadsToUse,
@@ -125,7 +121,7 @@ export async function main(ns: NS): Promise<void> {
         );
         hackWeakenThreadsNeeded -= threadsToUse;
         availableRam -= threadsToUse * weakenCost;
-        batches.push({
+        currentBatch.push({
           host: server,
           script: "weaken.js",
           threads: threadsToUse,
@@ -141,12 +137,21 @@ export async function main(ns: NS): Promise<void> {
         );
         growWeakenThreadsNeeded -= threadsToUse;
         availableRam -= threadsToUse * weakenCost;
-        batches.push({
+        currentBatch.push({
           host: server,
           script: "weaken.js",
           threads: threadsToUse,
           delay: growWeakenDelay,
         });
+      }
+
+      if (
+        hackThreadsNeeded === 0 &&
+        growThreadsNeeded === 0 &&
+        hackWeakenThreadsNeeded === 0 &&
+        growWeakenThreadsNeeded === 0
+      ) {
+        break;
       }
     }
 
@@ -158,7 +163,7 @@ export async function main(ns: NS): Promise<void> {
     ) {
       const start = Math.max(Date.now(), earliestStartTime);
       const batchStartTime = start + batchNumber * batchBuffer;
-      batches.forEach((batch) => {
+      currentBatch.forEach((batch) => {
         ns.exec(
           batch.script,
           batch.host,
