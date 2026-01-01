@@ -8,6 +8,7 @@ export function getMockServer(
   }
 ): Server {
   const moneyMax = ns.getServerMaxMoney(hostname);
+  const serverGrowth = ns.getServerGrowth(hostname);
   let moneyAvailable = moneyMax;
   if (mocks?.hackedMoneyMult) {
     moneyAvailable = moneyMax * mocks.hackedMoneyMult;
@@ -33,6 +34,7 @@ export function getMockServer(
     smtpPortOpen: true,
     sshPortOpen: true,
     sqlPortOpen: true,
+    serverGrowth,
     ...mocks,
   };
 }
