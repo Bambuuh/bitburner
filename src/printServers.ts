@@ -4,18 +4,16 @@ export function printServers(ns: NS) {
   const servers = ns.getPurchasedServers();
   ns.print("Servers");
   ns.print("----------------------------");
-  let lowestServerRam = Number.MAX_SAFE_INTEGER;
-  let highestServerRam = 0;
+  const ramCounts: Record<number, number> = {};
   servers.forEach((server) => {
     const serverRam = ns.getServerMaxRam(server);
-    if (serverRam < lowestServerRam) {
-      lowestServerRam = serverRam;
-    }
-    if (serverRam > highestServerRam) {
-      highestServerRam = serverRam;
-    }
+    ramCounts[serverRam] = (ramCounts[serverRam] || 0) + 1;
   });
   ns.print(`Server count: ${servers.length}`);
-  ns.print(`Lowest server RAM: ${lowestServerRam}GB`);
-  ns.print(`Highest server RAM: ${highestServerRam}GB`);
+  Object.keys(ramCounts)
+    .map(Number)
+    .sort((a, b) => a - b)
+    .forEach((ram) => {
+      ns.print(`${ram}GB: ${ramCounts[ram]}`);
+    });
 }
