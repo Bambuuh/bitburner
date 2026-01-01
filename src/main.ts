@@ -10,8 +10,6 @@ export async function main(ns: NS): Promise<void> {
   ns.disableLog("ALL");
   const canBatchCost = ns.getScriptRam("canBatch.js", "home");
 
-  const miniHackerCost = ns.getScriptRam("miniHacker.js", "home");
-
   let isBatching = false;
   let target = "n00dles";
   while (true) {
