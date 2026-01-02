@@ -14,9 +14,14 @@ type BatchItem = {
 export async function main(ns: NS): Promise<void> {
   const obj = ns.read("batchTarget.json");
   const previousBatchEnd = ns.read("nextBatchEnd.txt");
-  const earliestStartTime = previousBatchEnd
-    ? parseInt(previousBatchEnd, 10) + 40
+  const parsedPreviousBatchEnd = previousBatchEnd
+    ? parseInt(previousBatchEnd, 10)
     : 0;
+
+  // Wait for previous batches to finish before scheduling new ones
+  if (parsedPreviousBatchEnd > Date.now()) {
+    return;
+  }
 
   if (!obj) {
     return;
@@ -54,17 +59,17 @@ export async function main(ns: NS): Promise<void> {
       mockHackedServer,
       player,
       mockHackedServer.moneyMax ?? 1
-    )
+    ) * 1.1
   );
   const hackSecurityIncrease = ns.hackAnalyzeSecurity(baseHackThreadsNeeded);
   const growthSecurityIncrease = ns.growthAnalyzeSecurity(
     baseGrowThreadsNeeded
   );
   const baseHackWeakenThreadsNeeded = Math.ceil(
-    hackSecurityIncrease / weakenPerThread
+    (hackSecurityIncrease / weakenPerThread) * 1.1
   );
   const baseGrowWeakenThreadsNeeded = Math.ceil(
-    growthSecurityIncrease / weakenPerThread
+    (growthSecurityIncrease / weakenPerThread) * 1.1
   );
 
   let canKeepBatching = true;
@@ -73,6 +78,13 @@ export async function main(ns: NS): Promise<void> {
 
   const buffer = 40;
   const batchBuffer = buffer * 4;
+
+  // Calculate start time ONCE to avoid drift from Date.now() changing during loop
+  const now = Date.now();
+  const earliestHackLand = Math.max(
+    parsedPreviousBatchEnd + buffer,
+    now + weakenTime - buffer + 200 // +200ms buffer for exec delay
+  );
 
   while (canKeepBatching) {
     let hackThreadsNeeded = baseHackThreadsNeeded;
@@ -159,10 +171,8 @@ export async function main(ns: NS): Promise<void> {
       hackWeakenThreadsNeeded === 0 &&
       growWeakenThreadsNeeded === 0
     ) {
-      const start = Math.max(Date.now(), earliestStartTime);
-      const batchStartTime = start + batchNumber * batchBuffer;
-      const hackWeakenLandTime = batchStartTime + weakenTime;
-      const hackLandTime = hackWeakenLandTime - buffer;
+      const hackLandTime = earliestHackLand + batchNumber * batchBuffer;
+      const hackWeakenLandTime = hackLandTime + buffer;
       const growLandTime = hackWeakenLandTime + buffer;
       const growWeakenLandTime = growLandTime + buffer;
 

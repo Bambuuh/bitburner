@@ -24,9 +24,14 @@ export async function main(ns: NS) {
       }
     }
   } else {
+    serverList.sort((a, b) => {
+      const ramA = ns.getServerMaxRam(a);
+      const ramB = ns.getServerMaxRam(b);
+      return ramB - ramA;
+    });
     serverList.forEach((server) => {
       const maxRam = ns.getServerMaxRam(server);
-      const didUpgrade = ns.upgradePurchasedServer(server, maxRam * 2);
+      ns.upgradePurchasedServer(server, maxRam * 2);
       // if (didUpgrade) {
       //   ns.tprint(`Upgraded ${server} to ${maxRam * 2} RAM`);
       // }

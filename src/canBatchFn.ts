@@ -15,6 +15,7 @@ export function canBatch(ns: NS, target: string) {
   const weakenCost = ns.getScriptRam("weaken.js");
   const hackCost = ns.getScriptRam("hack.js");
   const growCost = ns.getScriptRam("grow.js");
+  const batchHackCost = ns.getScriptRam("batchHack.js");
 
   const weakenPerThread = ns.weakenAnalyze(1);
 
@@ -42,29 +43,24 @@ export function canBatch(ns: NS, target: string) {
         mockHackedServer,
         player,
         mockHackedServer.moneyMax ?? 1
-      )
+      ) * 1.1
     );
 
-    const hackSecurityIncrease = ns.hackAnalyzeSecurity(
-      hackThreadsNeeded,
-      target
-    );
-    const growthSecurityIncrease = ns.growthAnalyzeSecurity(
-      growThreadsNeeded,
-      target
-    );
+    const hackSecurityIncrease = ns.hackAnalyzeSecurity(hackThreadsNeeded);
+    const growthSecurityIncrease = ns.growthAnalyzeSecurity(growThreadsNeeded);
 
     let hackWeakenThreadsNeeded = Math.ceil(
-      hackSecurityIncrease / weakenPerThread
+      (hackSecurityIncrease / weakenPerThread) * 1.1
     );
     let growWeakenThreadsNeeded = Math.ceil(
-      growthSecurityIncrease / weakenPerThread
+      (growthSecurityIncrease / weakenPerThread) * 1.1
     );
 
     for (const server of usableServers) {
-      let availableRam = ns.getServerMaxRam(server);
+      let availableRam =
+        ns.getServerMaxRam(server) - ns.getServerUsedRam(server);
       if (server === "home") {
-        availableRam -= 10;
+        availableRam -= batchHackCost;
       }
       const possibleHackThreads = Math.floor(availableRam / hackCost);
       if (hackThreadsNeeded > 0 && possibleHackThreads > 0) {
