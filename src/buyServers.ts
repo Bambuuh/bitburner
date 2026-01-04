@@ -16,9 +16,7 @@ export async function main(ns: NS) {
         2
       );
       if (name) {
-        addScripts(ns, name);
         serverCount++;
-        // ns.tprint(`Purchased new server, new count ${serverCount}`);
         money -= newServerCost;
         serverList.push(name);
       }
@@ -31,18 +29,12 @@ export async function main(ns: NS) {
     });
     serverList.forEach((server) => {
       const maxRam = ns.getServerMaxRam(server);
-      ns.upgradePurchasedServer(server, maxRam * 2);
-      // if (didUpgrade) {
-      //   ns.tprint(`Upgraded ${server} to ${maxRam * 2} RAM`);
-      // }
+      let upgradeToRam = 1048576;
+      let hasPurchased = false;
+      while (upgradeToRam > maxRam && !hasPurchased) {
+        hasPurchased = ns.upgradePurchasedServer(server, upgradeToRam);
+        upgradeToRam /= 2;
+      }
     });
-  }
-}
-
-function addScripts(ns: NS, server: string) {
-  const scripts = ["hack.js", "grow.js", "weaken.js"];
-
-  for (const script of scripts) {
-    ns.scp(script, server);
   }
 }

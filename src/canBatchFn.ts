@@ -2,7 +2,7 @@ import { NS } from "@ns";
 import { getMockServer } from "./getMockServer";
 import { getUsableServers } from "./getUsableServers";
 
-export function canBatch(ns: NS, target: string) {
+export function canBatch(ns: NS, target: string): BatchData | undefined {
   const moneyMax = ns.getServerMaxMoney(target);
   const player = ns.getPlayer();
 
@@ -19,7 +19,7 @@ export function canBatch(ns: NS, target: string) {
 
   const weakenPerThread = ns.weakenAnalyze(1);
 
-  let multiplier = 0.5;
+  let multiplier = 0.9;
 
   const mockPrimedServer = getMockServer(ns, target);
 

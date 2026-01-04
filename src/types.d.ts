@@ -3,3 +3,8 @@ type PrimeData = {
   target: string;
   endTime: number;
 };
+
+type BatchData = {
+  target: string;
+  multiplier: number;
+};

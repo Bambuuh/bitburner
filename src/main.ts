@@ -16,9 +16,9 @@ export async function main(ns: NS): Promise<void> {
   while (true) {
     ns.exec("hackServers.js", "home");
     await ns.sleep(10);
-    ns.exec("copyScripts.js", "home");
-    await ns.sleep(10);
     ns.exec("buyServers.js", "home");
+    await ns.sleep(10);
+    ns.exec("copyScripts.js", "home");
     await ns.sleep(10);
     ns.clearLog();
     printServers(ns);
@@ -79,13 +79,18 @@ export async function main(ns: NS): Promise<void> {
       ns.print("Target: " + target);
       if (isPrimed) {
         ns.print("Status: hacking");
-        ns.exec("batchHack.js", "home");
+        ns.exec("shotgun.js", "home");
         await ns.sleep(10);
       } else {
         ns.print("Status: priming");
         const primeDataStr = ns.read("primeTargetData.txt");
         if (primeDataStr) {
           const primeData: PrimeData = JSON.parse(primeDataStr);
+          ns.print(
+            `Finished priming at: ${new Date(primeData.endTime)
+              .toLocaleTimeString("sv-SE")
+              .substring(0, 5)}`
+          );
           if (primeData.endTime < Date.now()) {
             ns.exec("primeTarget2.js", "home", {}, target);
             await ns.sleep(10);
@@ -93,6 +98,11 @@ export async function main(ns: NS): Promise<void> {
         }
       }
     }
-    await ns.sleep(1000);
+    let sleep = 1000;
+    if (isBatching && isPrimed) {
+      const weakenTime = ns.getWeakenTime(target);
+      sleep = weakenTime + 100;
+    }
+    await ns.sleep(sleep);
   }
 }
