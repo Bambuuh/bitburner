@@ -15,7 +15,7 @@ export function canBatch(ns: NS, target: string): BatchData | undefined {
   const weakenCost = ns.getScriptRam("weaken.js");
   const hackCost = ns.getScriptRam("hack.js");
   const growCost = ns.getScriptRam("grow.js");
-  const shotGunCost = ns.getScriptRam("shotgun.js");
+  const justInTimeCost = ns.getScriptRam("justInTime.js");
 
   const weakenPerThread = ns.weakenAnalyze(1);
 
@@ -50,28 +50,38 @@ export function canBatch(ns: NS, target: string): BatchData | undefined {
     const growthSecurityIncrease = ns.growthAnalyzeSecurity(growThreadsNeeded);
 
     let hackWeakenThreadsNeeded = Math.ceil(
-      (hackSecurityIncrease / weakenPerThread) * 1.1
+      (hackSecurityIncrease / weakenPerThread) * 1.2
     );
     let growWeakenThreadsNeeded = Math.ceil(
-      (growthSecurityIncrease / weakenPerThread) * 1.1
+      (growthSecurityIncrease / weakenPerThread) * 1.2
     );
 
     for (const server of usableServers) {
       let availableRam =
         ns.getServerMaxRam(server) - ns.getServerUsedRam(server);
       if (server === "home") {
-        availableRam = Math.max(0, availableRam - shotGunCost);
+        availableRam = Math.max(0, availableRam - justInTimeCost);
       }
       const possibleHackThreads = Math.floor(availableRam / hackCost);
-      if (hackThreadsNeeded > 0 && possibleHackThreads > 0) {
+      const canRunAllHackThreads = possibleHackThreads >= hackThreadsNeeded;
+      if (
+        hackThreadsNeeded > 0 &&
+        possibleHackThreads > 0 &&
+        canRunAllHackThreads
+      ) {
         const threadsToUse = Math.min(hackThreadsNeeded, possibleHackThreads);
         hackThreadsNeeded -= threadsToUse;
         availableRam -= threadsToUse * hackCost;
       }
 
       const possibleGrowThreads = Math.floor(availableRam / growCost);
+      const canRunAllGrowThreads = possibleGrowThreads >= growThreadsNeeded;
 
-      if (growThreadsNeeded > 0 && possibleGrowThreads > 0) {
+      if (
+        growThreadsNeeded > 0 &&
+        possibleGrowThreads > 0 &&
+        canRunAllGrowThreads
+      ) {
         const threadsToUse = Math.min(growThreadsNeeded, possibleGrowThreads);
         growThreadsNeeded -= threadsToUse;
         availableRam -= threadsToUse * growCost;
