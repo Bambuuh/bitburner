@@ -1,7 +1,14 @@
 import { NS } from "@ns";
-import { printServers } from "./printServers";
+
+const tailWidth = 278;
+const tailHeight = 470;
+const infoWindowWidth = 188;
 
 export async function main(ns: NS): Promise<void> {
+  const [width] = ns.ui.windowSize();
+  ns.ui.openTail();
+  ns.ui.resizeTail(tailWidth, tailHeight);
+  ns.ui.moveTail(width - tailWidth - infoWindowWidth, 0);
   ns.rm("batchTarget.json");
   ns.rm("primeTargetDone.txt");
   ns.rm("primeTargetData.json");
@@ -11,6 +18,7 @@ export async function main(ns: NS): Promise<void> {
   ns.rm("canHomeShotgun.txt");
   ns.disableLog("ALL");
   const canBatchCost = ns.getScriptRam("canBatch.js", "home");
+  let oldMoney = ns.getPlayer().money;
 
   ns.exec("maybeStudy.js", "home");
   await ns.sleep(10);
@@ -19,6 +27,14 @@ export async function main(ns: NS): Promise<void> {
   // let canShotGun = false;
   let target = "n00dles";
   while (true) {
+    ns.exec("printStatus.js", "home", {}, oldMoney, target);
+    await ns.sleep(10);
+    const statusContent = ns.read("status.json");
+    if (statusContent) {
+      ns.clearLog();
+      const list = JSON.parse(statusContent);
+      list.forEach((line: string) => ns.print(line));
+    }
     ns.exec("hackServers.js", "home");
     await ns.sleep(10);
     ns.exec("buyServers.js", "home");
@@ -40,8 +56,6 @@ export async function main(ns: NS): Promise<void> {
     await ns.sleep(10);
     ns.exec("handleFactions.js", "home");
     await ns.sleep(10);
-    ns.clearLog();
-    printServers(ns);
     let isPrimed = false;
     const primeData = ns.read("primeTargetData.json");
     if (primeData) {
@@ -74,9 +88,6 @@ export async function main(ns: NS): Promise<void> {
             const parsedPrimeData = JSON.parse(primeData);
             isPrimed = parsedPrimeData.status === "ready";
           }
-          ns.tprint(
-            `Using batch target: ${parsed.target} with multiplier: ${parsed.multiplier}`
-          );
         }
         target = parsed.target;
       }
@@ -92,24 +103,16 @@ export async function main(ns: NS): Promise<void> {
       await ns.sleep(10);
     }
     if (!isBatching) {
-      ns.print("Target: n00dles");
       ns.exec("miniHacker.js", "home");
       await ns.sleep(10);
     } else {
-      ns.print("Target: " + target);
       if (isPrimed) {
         ns.exec("batchMain.js", "home");
         await ns.sleep(10);
       } else {
-        ns.print("Status: priming");
         const primeDataStr = ns.read("primeTargetData.json");
         if (primeDataStr) {
           const primeData: PrimeData = JSON.parse(primeDataStr);
-          ns.print(
-            `Finished priming at: ${new Date(primeData.endTime)
-              .toLocaleTimeString("sv-SE")
-              .substring(0, 5)}`
-          );
           if (primeData.endTime < Date.now()) {
             ns.exec("primeMain.js", "home", {}, target);
             await ns.sleep(10);
@@ -123,6 +126,7 @@ export async function main(ns: NS): Promise<void> {
       const weakenTime = ns.getWeakenTime(target);
       sleep = weakenTime + 100;
     }
+    oldMoney = ns.getPlayer().money;
     await ns.sleep(sleep);
   }
 }

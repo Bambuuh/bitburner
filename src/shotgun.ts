@@ -10,7 +10,6 @@ export async function main(ns: NS): Promise<void> {
   }
   const data: BatchData = JSON.parse(obj);
   const target = data.target;
-  ns.tprint(`Target: ${target}`);
 
   const servers = getUsableServers(ns);
 
@@ -64,10 +63,4 @@ export async function main(ns: NS): Promise<void> {
       counter += 1;
     }
   }
-
-  ns.tprint(`Executed ${counter} cycles`);
-  const server = ns.getServer(target);
-  ns.tprint(
-    `Server ${target}: money=${server.moneyAvailable}, security=${server.hackDifficulty}`
-  );
 }

@@ -23,8 +23,6 @@ export async function main(ns: NS): Promise<void> {
   const target =
     argsTarget !== undefined && argsTarget !== "" ? argsTarget : data.target;
 
-  ns.tprint(`Target: ${target}`);
-
   const servers = getUsableServers(ns);
 
   const mockServer = getMockServer(ns, target);
@@ -208,9 +206,10 @@ export async function main(ns: NS): Promise<void> {
     });
   });
 
-  ns.tprint(`Executed ${counter} cycles`);
   const server = ns.getServer(target);
-  ns.tprint(
-    `Server ${target}: money=${server.moneyAvailable}, security=${server.hackDifficulty}`
-  );
+  if ((server && server.hackDifficulty) ?? 0 > (server?.minDifficulty ?? 0)) {
+    ns.tprint(
+      `Server ${target} is coooked, min security: ${server.minDifficulty} current: ${server.hackDifficulty}`
+    );
+  }
 }

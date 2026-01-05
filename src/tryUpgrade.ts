@@ -1,12 +1,7 @@
 import { NS } from "@ns";
 
 export async function main(ns: NS): Promise<void> {
-  const didUpgradeMain = ns.singularity.upgradeHomeRam();
-  if (didUpgradeMain) {
-    const ram = ns.getServerMaxRam("home");
-    ns.tprint(`Upgraded home RAM to ${ram} GB`);
-  }
-
+  ns.singularity.upgradeHomeRam();
   ns.singularity.purchaseTor();
   ns.singularity.purchaseProgram("BruteSSH.exe");
   ns.singularity.purchaseProgram("FTPCrack.exe");

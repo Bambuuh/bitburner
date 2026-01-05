@@ -52,13 +52,10 @@ export async function main(ns: NS): Promise<void> {
           }
 
           if (closedPorts <= 0) {
-            const nuked = ns.nuke(server);
+            ns.nuke(server);
             deepConnectFn(ns, server);
             await ns.singularity.installBackdoor();
             ns.singularity.connect("home");
-            if (nuked) {
-              ns.tprint(`Nuked ${server}`);
-            }
           }
         }
       }
