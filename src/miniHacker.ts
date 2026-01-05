@@ -19,7 +19,7 @@ export async function main(ns: NS): Promise<void> {
       ? JSON.parse(primeData)
       : null;
     if (!parsedPrimeData || parsedPrimeData.endTime < Date.now()) {
-      ns.exec("primeTarget2.js", "home", {}, target);
+      ns.exec("primeMain.js", "home", {}, target);
     }
   } else {
     ns.exec("miniHack.js", "home");

@@ -70,8 +70,8 @@ export async function main(ns: NS): Promise<void> {
     let hackRemaining = highestPossible.hackThreads;
     let weakenRemaining = highestPossible.weakenThreads;
 
-    const hackStartTime = Date.now() + weakenTime - hackTime - 40;
-    const weakenStartTIme = Date.now();
+    // const hackStartTime = Date.now() + weakenTime - hackTime - 40;
+    // const weakenStartTIme = Date.now();
 
     for (const server of usableServers) {
       let availableRam =
@@ -79,14 +79,21 @@ export async function main(ns: NS): Promise<void> {
       const possibleHackThreads = Math.floor(availableRam / hackCost);
       if (hackRemaining > 0 && possibleHackThreads > 0) {
         const threadsToUse = Math.min(hackRemaining, possibleHackThreads);
-        ns.exec("hack.js", server, threadsToUse, target, 0, hackStartTime);
+        ns.exec(
+          "hack.js",
+          server,
+          threadsToUse,
+          target,
+          0,
+          weakenTime - hackTime
+        );
         hackRemaining -= threadsToUse;
         availableRam -= threadsToUse * hackCost;
       }
       const possibleWeakenThreads = Math.floor(availableRam / weakenCost);
       if (weakenRemaining > 0 && possibleWeakenThreads > 0) {
         const threadsToUse = Math.min(weakenRemaining, possibleWeakenThreads);
-        ns.exec("weaken.js", server, threadsToUse, target, 0, weakenStartTIme);
+        ns.exec("weaken.js", server, threadsToUse, target, 0);
         weakenRemaining -= threadsToUse;
       }
       // if (weakenRemaining <= 0 && growRemaining <= 0) {

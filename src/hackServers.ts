@@ -1,4 +1,5 @@
 import { NS } from "@ns";
+import { deepConnectFn } from "./deepConnectFn";
 
 export async function main(ns: NS): Promise<void> {
   const player = ns.getPlayer();
@@ -52,6 +53,9 @@ export async function main(ns: NS): Promise<void> {
 
           if (closedPorts <= 0) {
             const nuked = ns.nuke(server);
+            deepConnectFn(ns, server);
+            await ns.singularity.installBackdoor();
+            ns.singularity.connect("home");
             if (nuked) {
               ns.tprint(`Nuked ${server}`);
             }

@@ -1,5 +1,5 @@
 type PrimeData = {
-  status: "priming" | "ready";
+  status: "weakening" | "growing" | "ready";
   target: string;
   endTime: number;
 };

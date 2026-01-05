@@ -15,7 +15,7 @@ export function canBatch(ns: NS, target: string): BatchData | undefined {
   const weakenCost = ns.getScriptRam("weaken.js");
   const hackCost = ns.getScriptRam("hack.js");
   const growCost = ns.getScriptRam("grow.js");
-  const batchHackCost = ns.getScriptRam("batchHack.js");
+  const shotGunCost = ns.getScriptRam("shotgun.js");
 
   const weakenPerThread = ns.weakenAnalyze(1);
 
@@ -60,7 +60,7 @@ export function canBatch(ns: NS, target: string): BatchData | undefined {
       let availableRam =
         ns.getServerMaxRam(server) - ns.getServerUsedRam(server);
       if (server === "home") {
-        availableRam -= batchHackCost;
+        availableRam = Math.max(0, availableRam - shotGunCost);
       }
       const possibleHackThreads = Math.floor(availableRam / hackCost);
       if (hackThreadsNeeded > 0 && possibleHackThreads > 0) {

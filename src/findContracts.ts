@@ -1,6 +1,6 @@
 import { NS } from "@ns";
+import { arrayJumpingGame } from "./contracts/arrayJumpingGame";
 import { ceasar } from "./contracts/ceasar";
-import { squareRoot } from "./contracts/squareRoot";
 import { hammingCodes } from "/contracts/hammingCodes";
 
 export async function main(ns: NS) {
@@ -42,11 +42,15 @@ export async function main(ns: NS) {
           attempt(res, contract, server);
         }
         if (contractType === "Square Root") {
-          const res = squareRoot(data);
+          // const res = squareRoot(data);
           // attempt(String(res), contract, server);
         }
         if (contractType === "Total Ways to Sum II") {
           // TODO: implement Total Ways to Sum II contract solver
+        }
+        if (contractType === "Array Jumping Game") {
+          // const res = arrayJumpingGame(data);
+          // attempt(String(res), contract, server);
         }
       }
     }

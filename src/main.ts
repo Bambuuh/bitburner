@@ -4,14 +4,19 @@ import { printServers } from "./printServers";
 export async function main(ns: NS): Promise<void> {
   ns.rm("batchTarget.json");
   ns.rm("primeTargetDone.txt");
-  ns.rm("primeTargetData.txt");
+  ns.rm("primeTargetData.json");
   ns.rm("nextBatchStart.txt");
   ns.rm("nextBatchEnd.txt");
   ns.rm("bestTarget.txt");
+  ns.rm("canHomeShotgun.txt");
   ns.disableLog("ALL");
   const canBatchCost = ns.getScriptRam("canBatch.js", "home");
 
+  ns.exec("maybeStudy.js", "home");
+  await ns.sleep(10);
+
   let isBatching = false;
+  // let canShotGun = false;
   let target = "n00dles";
   while (true) {
     ns.exec("hackServers.js", "home");
@@ -20,10 +25,25 @@ export async function main(ns: NS): Promise<void> {
     await ns.sleep(10);
     ns.exec("copyScripts.js", "home");
     await ns.sleep(10);
+
+    // if (!canShotGun) {
+    //   ns.exec("canHomeShotgun.js", "home");
+    //   await ns.sleep(10);
+    //   const canShotGunValue = ns.read("canHomeShotgun.txt") === "true";
+    //   if (canShotGunValue) {
+    //     ns.rm("primeTargetData.json");
+    //     canShotGun = true;
+    //   }
+    // }
+
+    ns.exec("tryUpgrade.js", "home");
+    await ns.sleep(10);
+    ns.exec("handleFactions.js", "home");
+    await ns.sleep(10);
     ns.clearLog();
     printServers(ns);
     let isPrimed = false;
-    const primeData = ns.read("primeTargetData.txt");
+    const primeData = ns.read("primeTargetData.json");
     if (primeData) {
       const parsedPrimeData = JSON.parse(primeData);
       isPrimed = parsedPrimeData.status === "ready";
@@ -45,11 +65,11 @@ export async function main(ns: NS): Promise<void> {
       const obj = ns.read("batchTarget.json");
       if (obj) {
         const parsed = JSON.parse(obj);
-        const primeDataStr = ns.read("primeTargetData.txt");
+        const primeDataStr = ns.read("primeTargetData.json");
         if (parsed.target !== target || primeDataStr === "") {
-          ns.exec("primeTarget2.js", "home", {}, parsed.target);
+          ns.exec("primeMain.js", "home", {}, parsed.target);
           await ns.sleep(10);
-          const primeData = ns.read("primeTargetData.txt");
+          const primeData = ns.read("primeTargetData.json");
           if (primeData) {
             const parsedPrimeData = JSON.parse(primeData);
             isPrimed = parsedPrimeData.status === "ready";
@@ -78,12 +98,11 @@ export async function main(ns: NS): Promise<void> {
     } else {
       ns.print("Target: " + target);
       if (isPrimed) {
-        ns.print("Status: hacking");
-        ns.exec("shotgun.js", "home");
+        ns.exec("batchMain.js", "home");
         await ns.sleep(10);
       } else {
         ns.print("Status: priming");
-        const primeDataStr = ns.read("primeTargetData.txt");
+        const primeDataStr = ns.read("primeTargetData.json");
         if (primeDataStr) {
           const primeData: PrimeData = JSON.parse(primeDataStr);
           ns.print(
@@ -92,14 +111,15 @@ export async function main(ns: NS): Promise<void> {
               .substring(0, 5)}`
           );
           if (primeData.endTime < Date.now()) {
-            ns.exec("primeTarget2.js", "home", {}, target);
+            ns.exec("primeMain.js", "home", {}, target);
             await ns.sleep(10);
           }
         }
       }
     }
     let sleep = 1000;
-    if (isBatching && isPrimed) {
+    target = isBatching ? target : "n00dles";
+    if (isPrimed) {
       const weakenTime = ns.getWeakenTime(target);
       sleep = weakenTime + 100;
     }
