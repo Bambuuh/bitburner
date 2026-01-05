@@ -1,4 +1,5 @@
 import { NS } from "@ns";
+import { hasDoneFaction } from "./hasDoneFaction";
 
 function getPrettyRam(ram: number): string {
   return ram >= 1024 ? `${ram / 1024} TB` : `${ram} GB`;
@@ -10,8 +11,8 @@ export async function main(ns: NS): Promise<void> {
   const target = ns.args[1] as string | undefined;
   const servers = ns.getPurchasedServers();
   const texts: string[] = [];
-  texts.push("Servers");
-  texts.push("----------------------------");
+  const homeRam = ns.getServerMaxRam("home");
+  texts.push(`Home: ${getPrettyRam(homeRam)}`);
   const ramCounts: Record<number, number> = {};
   servers.forEach((server) => {
     const serverRam = ns.getServerMaxRam(server);
@@ -25,10 +26,9 @@ export async function main(ns: NS): Promise<void> {
       const shortenedRam = getPrettyRam(ram);
       texts.push(`${shortenedRam}: ${ramCounts[ram]}`);
     });
+
   texts.push("----------------------------");
 
-  const homeRam = ns.getServerMaxRam("home");
-  texts.push(`Home RAM: ${getPrettyRam(homeRam)}`);
   const weakenTimeInMs = target ? ns.getWeakenTime(target) : 1;
   const weakenTimeInSeconds = weakenTimeInMs / 1000;
   const money = ns.getPlayer().money;
@@ -43,7 +43,37 @@ export async function main(ns: NS): Promise<void> {
       ? `${(incomePerSec / 1000).toFixed(2)} K/s`
       : `${incomePerSec.toFixed(2)} /s`;
   texts.push(`Target: ${target || "none"}`);
-  texts.push(`Income per second: ${incomePerSecShort}`);
+  texts.push(`Income: ${incomePerSecShort}`);
+
+  texts.push("----------------------------");
+
+  texts.push(`CyberSec:         ${getFactionStatus(ns, "CyberSec")}`);
+  texts.push(`Tian Di Hui:      ${getFactionStatus(ns, "Tian Di Hui")}`);
+  texts.push(`NiteSec:          ${getFactionStatus(ns, "NiteSec")}`);
+  texts.push(`The Black Hand:   ${getFactionStatus(ns, "The Black Hand")}`);
+  texts.push(`BitRunners:       ${getFactionStatus(ns, "BitRunners")}`);
+  texts.push(`Daedalus:         ${getFactionStatus(ns, "Daedalus")}`);
+  texts.push(`Illuminati:       ${getFactionStatus(ns, "Illuminati")}`);
 
   ns.write("status.json", JSON.stringify(texts), "w");
+}
+
+function getFactionStatus(ns: NS, factionName: string): string {
+  if (hasDoneFaction(ns, factionName)) {
+    return "[✓]";
+  }
+  if (isWorkingOnFaction(ns, factionName)) {
+    return "[→]";
+  }
+
+  return "[ ]";
+}
+
+function isWorkingOnFaction(ns: NS, factionName: string): boolean {
+  const joinedFactions = ns.getPlayer().factions;
+  if (joinedFactions.length === 0) {
+    return false;
+  }
+
+  return joinedFactions.includes(factionName);
 }
