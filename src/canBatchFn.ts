@@ -43,7 +43,7 @@ export function canBatch(ns: NS, target: string): BatchData | undefined {
         mockHackedServer,
         player,
         mockHackedServer.moneyMax ?? 1
-      ) * 1.1
+      ) * 1.2
     );
 
     const hackSecurityIncrease = ns.hackAnalyzeSecurity(hackThreadsNeeded);
@@ -74,6 +74,16 @@ export function canBatch(ns: NS, target: string): BatchData | undefined {
         availableRam -= threadsToUse * hackCost;
       }
 
+      const possibleHackWeakenThreads = Math.floor(availableRam / weakenCost);
+      if (hackWeakenThreadsNeeded > 0 && possibleHackWeakenThreads > 0) {
+        const threadsToUse = Math.min(
+          hackWeakenThreadsNeeded,
+          possibleHackWeakenThreads
+        );
+        hackWeakenThreadsNeeded -= threadsToUse;
+        availableRam -= threadsToUse * weakenCost;
+      }
+
       const possibleGrowThreads = Math.floor(availableRam / growCost);
       const canRunAllGrowThreads = possibleGrowThreads >= growThreadsNeeded;
 
@@ -85,16 +95,6 @@ export function canBatch(ns: NS, target: string): BatchData | undefined {
         const threadsToUse = Math.min(growThreadsNeeded, possibleGrowThreads);
         growThreadsNeeded -= threadsToUse;
         availableRam -= threadsToUse * growCost;
-      }
-
-      const possibleHackWeakenThreads = Math.floor(availableRam / weakenCost);
-      if (hackWeakenThreadsNeeded > 0 && possibleHackWeakenThreads > 0) {
-        const threadsToUse = Math.min(
-          hackWeakenThreadsNeeded,
-          possibleHackWeakenThreads
-        );
-        hackWeakenThreadsNeeded -= threadsToUse;
-        availableRam -= threadsToUse * weakenCost;
       }
 
       const possibleGrowWeakenThreads = Math.floor(availableRam / weakenCost);

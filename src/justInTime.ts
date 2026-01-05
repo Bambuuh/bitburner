@@ -56,12 +56,10 @@ export async function main(ns: NS): Promise<void> {
       hackedServer,
       player,
       mockServer.moneyMax!
-    ) * 1.1
+    ) * 1.2
   );
   const growSecurity = ns.growthAnalyzeSecurity(growThreads);
   const weakenGrowthThreads = Math.ceil((growSecurity / weakenEffect) * 1.2);
-
-  let counter = 0;
 
   const batches: ScriptRun[][] = [];
   const batch: ScriptRun[] = [];
@@ -82,115 +80,108 @@ export async function main(ns: NS): Promise<void> {
     let growThreadsRemaining = growThreads;
     let weakenGrowthThreadsRemaining = weakenGrowthThreads;
 
-    let isBatchComplete = false;
-
-    while (!isBatchComplete) {
-      if (hackThreadsRemaining > 0) {
-        for (const server of usableServers) {
-          const possibleHackThreads = Math.min(
-            Math.floor(server.availableRam / hackCost),
-            hackThreadsRemaining
-          );
-          const canRunAllHackThreads = possibleHackThreads >= hackThreads;
-          if (possibleHackThreads > 0 && canRunAllHackThreads) {
-            batch.push({
-              script: "hack.js",
-              server: server.name,
-              threads: possibleHackThreads,
-              target,
-              additionalMsec: weakenTime - hackTime,
-            });
-            hackThreadsRemaining -= possibleHackThreads;
-            server.availableRam -= possibleHackThreads * hackCost;
-            break;
-          }
+    if (hackThreadsRemaining > 0) {
+      for (const server of usableServers) {
+        const possibleHackThreads = Math.min(
+          Math.floor(server.availableRam / hackCost),
+          hackThreadsRemaining
+        );
+        const canRunAllHackThreads = possibleHackThreads >= hackThreads;
+        if (possibleHackThreads > 0 && canRunAllHackThreads) {
+          batch.push({
+            script: "hack.js",
+            server: server.name,
+            threads: possibleHackThreads,
+            target,
+            additionalMsec: weakenTime - hackTime,
+          });
+          hackThreadsRemaining -= possibleHackThreads;
+          server.availableRam -= possibleHackThreads * hackCost;
+          break;
         }
       }
+    }
 
-      if (weakenHackThreadsRemaining > 0) {
-        for (const server of usableServers) {
-          const possibleWeakenHackThreads = Math.min(
-            Math.floor(server.availableRam / weakenCost),
-            weakenHackThreadsRemaining
-          );
-          if (possibleWeakenHackThreads >= 1) {
-            batch.push({
-              script: "weaken.js",
-              server: server.name,
-              threads: possibleWeakenHackThreads,
-              target,
-              additionalMsec: 0,
-            });
-            weakenHackThreadsRemaining -= possibleWeakenHackThreads;
-            server.availableRam -= possibleWeakenHackThreads * weakenCost;
-          }
-
-          if (weakenHackThreadsRemaining <= 0) {
-            break;
-          }
+    if (weakenHackThreadsRemaining > 0) {
+      for (const server of usableServers) {
+        const possibleWeakenHackThreads = Math.min(
+          Math.floor(server.availableRam / weakenCost),
+          weakenHackThreadsRemaining
+        );
+        if (possibleWeakenHackThreads >= 1) {
+          batch.push({
+            script: "weaken.js",
+            server: server.name,
+            threads: possibleWeakenHackThreads,
+            target,
+            additionalMsec: 0,
+          });
+          weakenHackThreadsRemaining -= possibleWeakenHackThreads;
+          server.availableRam -= possibleWeakenHackThreads * weakenCost;
         }
-        isBatchComplete = true;
-      }
 
-      if (growThreadsRemaining > 0) {
-        for (const server of usableServers) {
-          const possibleGrowThreads = Math.min(
-            Math.floor(server.availableRam / growCost),
-            growThreadsRemaining
-          );
-          const canRunAllGrowThreads = possibleGrowThreads >= growThreads;
-          if (possibleGrowThreads > 0 && canRunAllGrowThreads) {
-            batch.push({
-              script: "grow.js",
-              server: server.name,
-              threads: possibleGrowThreads,
-              target,
-              additionalMsec: weakenTime - growTime,
-            });
-            growThreadsRemaining -= possibleGrowThreads;
-            server.availableRam -= possibleGrowThreads * growCost;
-            break;
-          }
+        if (weakenHackThreadsRemaining <= 0) {
+          break;
         }
       }
+    }
 
-      if (weakenGrowthThreadsRemaining > 0) {
-        for (const server of usableServers) {
-          const possibleWeakenGrowthThreads = Math.min(
-            Math.floor(server.availableRam / weakenCost),
-            weakenGrowthThreadsRemaining
-          );
-          if (possibleWeakenGrowthThreads >= 1) {
-            batch.push({
-              script: "weaken.js",
-              server: server.name,
-              threads: possibleWeakenGrowthThreads,
-              target,
-              additionalMsec: 0,
-            });
-            weakenGrowthThreadsRemaining -= possibleWeakenGrowthThreads;
-            server.availableRam -= possibleWeakenGrowthThreads * weakenCost;
-          }
-
-          if (weakenGrowthThreadsRemaining <= 0) {
-            break;
-          }
+    if (growThreadsRemaining > 0) {
+      for (const server of usableServers) {
+        const possibleGrowThreads = Math.min(
+          Math.floor(server.availableRam / growCost),
+          growThreadsRemaining
+        );
+        const canRunAllGrowThreads = possibleGrowThreads >= growThreads;
+        if (possibleGrowThreads > 0 && canRunAllGrowThreads) {
+          batch.push({
+            script: "grow.js",
+            server: server.name,
+            threads: possibleGrowThreads,
+            target,
+            additionalMsec: weakenTime - growTime,
+          });
+          growThreadsRemaining -= possibleGrowThreads;
+          server.availableRam -= possibleGrowThreads * growCost;
+          break;
         }
       }
+    }
 
-      if (
-        hackThreadsRemaining <= 0 &&
-        weakenHackThreadsRemaining <= 0 &&
-        growThreadsRemaining <= 0 &&
-        weakenGrowthThreadsRemaining <= 0
-      ) {
-        batches.push([...batch]);
-        batch.length = 0;
-        isBatchComplete = true;
-        counter++;
-      } else {
-        canRunMore = false;
+    if (weakenGrowthThreadsRemaining > 0) {
+      for (const server of usableServers) {
+        const possibleWeakenGrowthThreads = Math.min(
+          Math.floor(server.availableRam / weakenCost),
+          weakenGrowthThreadsRemaining
+        );
+        if (possibleWeakenGrowthThreads >= 1) {
+          batch.push({
+            script: "weaken.js",
+            server: server.name,
+            threads: possibleWeakenGrowthThreads,
+            target,
+            additionalMsec: 0,
+          });
+          weakenGrowthThreadsRemaining -= possibleWeakenGrowthThreads;
+          server.availableRam -= possibleWeakenGrowthThreads * weakenCost;
+        }
+
+        if (weakenGrowthThreadsRemaining <= 0) {
+          break;
+        }
       }
+    }
+
+    if (
+      hackThreadsRemaining <= 0 &&
+      weakenHackThreadsRemaining <= 0 &&
+      growThreadsRemaining <= 0 &&
+      weakenGrowthThreadsRemaining <= 0
+    ) {
+      batches.push([...batch]);
+      batch.length = 0;
+    } else {
+      canRunMore = false;
     }
   }
 
