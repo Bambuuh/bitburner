@@ -93,7 +93,7 @@ export async function main(ns: NS): Promise<void> {
       }
     }
 
-    ns.exec("bestHackTarget2.js", "home");
+    ns.exec("bestHackTarget2.js", "home", {}, isBatching);
     await ns.sleep(10);
 
     const bestTarget = ns.read("bestTarget.txt");

@@ -1,4 +1,5 @@
 import { NS } from "@ns";
+import { batchTargetValue } from "./bestBatchTarget";
 import { canBatch } from "./canBatchFn";
 import { getMockServer } from "./getMockServer";
 import { getUsableServers } from "./getUsableServers";
@@ -6,6 +7,7 @@ import { getUsableServers } from "./getUsableServers";
 export async function main(ns: NS) {
   const usableServers = getUsableServers(ns);
   const player = ns.getPlayer();
+  const isBatching = ns.args[0] as boolean;
 
   const hackableServers = usableServers.filter((server) => {
     const requiredHackLevel = ns.getServerRequiredHackingLevel(server);
@@ -26,6 +28,11 @@ export async function main(ns: NS) {
   const scores = [];
 
   for (const server of hackableServers) {
+    if (isBatching) {
+      scores.push(batchTargetValue(ns, server));
+      continue;
+    }
+
     const batchData = canBatch(ns, server);
     const mockServer = getMockServer(ns, server);
     if (batchData || server === "n00dles") {

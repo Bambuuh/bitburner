@@ -22,6 +22,7 @@ export function canBatch(ns: NS, target: string): BatchData | undefined {
   let multiplier = 0.9;
 
   const mockPrimedServer = getMockServer(ns, target);
+  const weakenTime = ns.formulas.hacking.weakenTime(mockPrimedServer, player);
 
   const hackPercentPerThread = ns.formulas.hacking.hackPercent(
     mockPrimedServer,
