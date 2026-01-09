@@ -11,7 +11,7 @@ export async function main(ns: NS): Promise<void> {
 
   const minSecurity = ns.getServerMinSecurityLevel(target);
   const serverSecurity = ns.getServerSecurityLevel(target);
-  const maxMoney = ns.getServerMaxMoney(target);
+  const maxMoney = Math.floor(ns.getServerMaxMoney(target));
   const currentMoney = Math.floor(ns.getServerMoneyAvailable(target));
 
   if (serverSecurity > minSecurity) {

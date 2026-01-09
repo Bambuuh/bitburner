@@ -1,6 +1,7 @@
 import { NS } from "@ns";
 import { arrayJumpingGame } from "./contracts/arrayJumpingGame";
 import { ceasar } from "./contracts/ceasar";
+import { shortestPathInAGrid } from "./contracts/shortestPathInAGrid";
 import { hammingCodes } from "/contracts/hammingCodes";
 
 export async function main(ns: NS) {
@@ -11,7 +12,7 @@ export async function main(ns: NS) {
     if (reward.length > 0) {
       ns.tprint("REWARD", reward);
     } else {
-      ns.tprint("FAIL", reward);
+      ns.tprint("FAIL", contract);
     }
   }
 
@@ -51,6 +52,10 @@ export async function main(ns: NS) {
         if (contractType === "Array Jumping Game") {
           // const res = arrayJumpingGame(data);
           // attempt(String(res), contract, server);
+        }
+        if (contractType === "Shortest Path in a Grid") {
+          const res = shortestPathInAGrid(data);
+          attempt(String(res), contract, server);
         }
       }
     }

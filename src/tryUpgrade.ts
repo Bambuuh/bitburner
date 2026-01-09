@@ -1,7 +1,8 @@
 import { NS } from "@ns";
 
 export async function main(ns: NS): Promise<void> {
-  ns.singularity.upgradeHomeRam();
+  const money = ns.getPlayer().money;
+  const didUpgrade = ns.singularity.upgradeHomeRam();
   ns.singularity.upgradeHomeCores();
   ns.singularity.purchaseTor();
   ns.singularity.purchaseProgram("BruteSSH.exe");

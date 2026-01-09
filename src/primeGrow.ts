@@ -10,7 +10,7 @@ type ScriptRun = {
 };
 
 export async function primeGrow(ns: NS, target: string) {
-  const maxMoney = ns.getServerMaxMoney(target);
+  const maxMoney = Math.floor(ns.getServerMaxMoney(target));
   const currentMoney = Math.floor(ns.getServerMoneyAvailable(target));
   const weakenTime = ns.getWeakenTime(target);
   const growTime = ns.getGrowTime(target);
@@ -19,8 +19,6 @@ export async function primeGrow(ns: NS, target: string) {
 
   const weakenCost = ns.getScriptRam("weaken.js");
   const growCost = ns.getScriptRam("grow.js");
-  const weakenTimeMs = ns.getWeakenTime(target);
-  const growTimeMs = ns.getGrowTime(target);
 
   const mockServer = getMockServer(ns, target);
   mockServer.moneyAvailable = currentMoney;
@@ -61,7 +59,7 @@ export async function primeGrow(ns: NS, target: string) {
           script: "grow.js",
           threads: possibleGrowThreads,
           server: server,
-          additionalMsec: weakenTimeMs - growTimeMs,
+          additionalMsec: weakenTime - growTime,
         });
         growThreadsRequired -= possibleGrowThreads;
         availableRam -= growRamCost;

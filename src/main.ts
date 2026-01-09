@@ -1,4 +1,12 @@
 import { NS } from "@ns";
+import { PORTS } from "./PORTS";
+import { grow } from "./grow";
+import { hack } from "./hack";
+import { weaken } from "./weaken";
+
+console.log(grow);
+console.log(hack);
+console.log(weaken);
 
 const tailWidth = 278;
 const tailHeight = 470;
@@ -20,14 +28,24 @@ export async function main(ns: NS): Promise<void> {
   const canBatchCost = ns.getScriptRam("canBatch.js", "home");
   let oldMoney = ns.getPlayer().money;
 
-  ns.exec("maybeStudy.js", "home");
-  await ns.sleep(10);
+  // ns.exec("maybeStudy.js", "home");
+  // await ns.sleep(10);
+  let shouldShare = false;
+  let shouldExpFarm = false;
 
   let isBatching = false;
   // let canShotGun = false;
   let target = "n00dles";
   while (true) {
-    ns.exec("printStatus.js", "home", {}, oldMoney, target);
+    ns.exec(
+      "printStatus.js",
+      "home",
+      {},
+      oldMoney,
+      target,
+      shouldShare,
+      shouldExpFarm
+    );
     await ns.sleep(10);
     const statusContent = ns.read("status.json");
     if (statusContent) {
@@ -35,12 +53,43 @@ export async function main(ns: NS): Promise<void> {
       const list = JSON.parse(statusContent);
       list.forEach((line: string) => ns.print(line));
     }
+    ns.exec("tryUpgrade.js", "home");
+    await ns.sleep(10);
+    ns.exec("miniFactions.js", "home");
+    await ns.sleep(10);
+    ns.exec("handleFactions.js", "home");
+    await ns.sleep(10);
     ns.exec("hackServers.js", "home");
     await ns.sleep(10);
     ns.exec("buyServers.js", "home");
     await ns.sleep(10);
     ns.exec("copyScripts.js", "home");
     await ns.sleep(10);
+    ns.exec("shouldStartSharing.js", "home", {}, target, oldMoney);
+    await ns.sleep(10);
+    shouldShare = ns.readPort(PORTS.startSharing) === true;
+    if (shouldShare) {
+      ns.exec("shareAll.js", "home");
+      await ns.sleep(10000 + 100);
+      continue;
+    }
+    ns.exec("shouldExpFarm.js", "home");
+    await ns.sleep(10);
+    shouldExpFarm = ns.readPort(PORTS.startExpFarm) === true;
+    if (shouldExpFarm) {
+      const primeTargetDataStr = ns.read("primeTargetData.json");
+      const primeTargetData: PrimeData =
+        primeTargetDataStr && JSON.parse(primeTargetDataStr);
+      if (!primeTargetData || primeTargetData.target !== "joesguns") {
+        ns.exec("primeMain.js", "home", {}, "joesguns");
+      } else if (primeTargetData.status === "ready") {
+        ns.exec("expFarm.js", "home");
+      } else if (primeTargetData.endTime < Date.now()) {
+        ns.exec("primeMain.js", "home", {}, "joesguns");
+        await ns.sleep(10);
+      }
+      continue;
+    }
 
     // if (!canShotGun) {
     //   ns.exec("canHomeShotgun.js", "home");
@@ -52,10 +101,6 @@ export async function main(ns: NS): Promise<void> {
     //   }
     // }
 
-    ns.exec("tryUpgrade.js", "home");
-    await ns.sleep(10);
-    ns.exec("handleFactions.js", "home");
-    await ns.sleep(10);
     let isPrimed = false;
     const primeData = ns.read("primeTargetData.json");
     if (primeData) {
@@ -127,6 +172,11 @@ export async function main(ns: NS): Promise<void> {
       sleep = weakenTime + 100;
     }
     oldMoney = ns.getPlayer().money;
+
+    // TODO: run shareAll if more than 10 seconds left
+
+    // TODO: calculate which mltiplier gives the most money
+
     await ns.sleep(sleep);
   }
 }

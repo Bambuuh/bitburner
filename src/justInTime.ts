@@ -103,7 +103,8 @@ export async function main(ns: NS): Promise<void> {
     }
 
     if (weakenHackThreadsRemaining > 0) {
-      for (const server of usableServers) {
+      for (let i = usableServers.length - 1; i >= 0; i--) {
+        const server = usableServers[i];
         const possibleWeakenHackThreads = Math.min(
           Math.floor(server.availableRam / weakenCost),
           weakenHackThreadsRemaining
@@ -149,7 +150,8 @@ export async function main(ns: NS): Promise<void> {
     }
 
     if (weakenGrowthThreadsRemaining > 0) {
-      for (const server of usableServers) {
+      for (let i = usableServers.length - 1; i >= 0; i--) {
+        const server = usableServers[i];
         const possibleWeakenGrowthThreads = Math.min(
           Math.floor(server.availableRam / weakenCost),
           weakenGrowthThreadsRemaining
