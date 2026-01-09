@@ -25,6 +25,8 @@ export async function main(ns: NS): Promise<void> {
   ns.rm("bestTarget.txt");
   ns.rm("canHomeShotgun.txt");
   ns.disableLog("ALL");
+  ns.exec("findContracts.js", "home");
+  await ns.sleep(10);
   const canBatchCost = ns.getScriptRam("canBatch.js", "home");
   let oldMoney = ns.getPlayer().money;
 
