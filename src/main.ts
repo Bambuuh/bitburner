@@ -25,8 +25,6 @@ export async function main(ns: NS): Promise<void> {
   ns.rm("bestTarget.txt");
   ns.rm("canHomeShotgun.txt");
   ns.disableLog("ALL");
-  ns.exec("findContracts.js", "home");
-  await ns.sleep(10);
   const canBatchCost = ns.getScriptRam("canBatch.js", "home");
   let oldMoney = ns.getPlayer().money;
 
@@ -48,6 +46,8 @@ export async function main(ns: NS): Promise<void> {
       shouldShare,
       shouldExpFarm
     );
+    await ns.sleep(10);
+    ns.exec("findContracts.js", "home", {}, "silent");
     await ns.sleep(10);
     const statusContent = ns.read("status.json");
     if (statusContent) {
