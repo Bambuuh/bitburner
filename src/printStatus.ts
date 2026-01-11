@@ -1,4 +1,9 @@
 import { NS } from "@ns";
+import {
+  getNerufluxLevel,
+  getNeurofluxProgress,
+  isAtNeurofluxMax,
+} from "./getNerufluxLevel";
 import { hasDoneFaction } from "./hasDoneFaction";
 
 function getPrettyRam(ram: number): string {
@@ -62,13 +67,20 @@ export async function main(ns: NS): Promise<void> {
   texts.push(`BitRunners:       ${getFactionStatus(ns, "BitRunners")}`);
   texts.push(`Daedalus:         ${getFactionStatus(ns, "Daedalus")}`);
   texts.push(`Leaving Cave:     ${getFactionStatus(ns, "Leaving Cave")}`);
+  if (hasDoneFaction(ns, "Daedalus")) {
+    texts.push(
+      `w0r1d_d43m0n level: ${ns.getServerRequiredHackingLevel("w0r1d_d43m0n")}`
+    );
+  }
 
   ns.write("status.json", JSON.stringify(texts), "w");
 }
 
 function getFactionStatus(ns: NS, factionName: string): string {
   if (factionName === "Leaving Cave" && hasDoneFaction(ns, "Illuminati")) {
-    return "[→]";
+    const isMissingNeuroflux = !isAtNeurofluxMax(ns);
+    const neuroFluxProgress = getNeurofluxProgress(ns);
+    return isMissingNeuroflux ? `[!] ${neuroFluxProgress}` : "[→]";
   }
   if (hasDoneFaction(ns, factionName)) {
     return "[✓]";

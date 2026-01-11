@@ -198,11 +198,4 @@ export async function main(ns: NS): Promise<void> {
       );
     });
   });
-
-  const server = ns.getServer(target);
-  if ((server && server.hackDifficulty) ?? 0 > (server?.minDifficulty ?? 0)) {
-    ns.tprint(
-      `Server ${target} is coooked, min security: ${server.minDifficulty} current: ${server.hackDifficulty}`
-    );
-  }
 }

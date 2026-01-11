@@ -28,13 +28,10 @@ export async function main(ns: NS): Promise<void> {
   const canBatchCost = ns.getScriptRam("canBatch.js", "home");
   let oldMoney = ns.getPlayer().money;
 
-  // ns.exec("maybeStudy.js", "home");
-  // await ns.sleep(10);
   let shouldShare = false;
   let shouldExpFarm = false;
 
   let isBatching = false;
-  // let canShotGun = false;
   let target = "n00dles";
   while (true) {
     ns.exec(
@@ -55,6 +52,10 @@ export async function main(ns: NS): Promise<void> {
       const list = JSON.parse(statusContent);
       list.forEach((line: string) => ns.print(line));
     }
+    ns.exec("shouldStartTraining.js", "home");
+    await ns.sleep(10);
+    ns.exec("shouldCommitCrime.js", "home");
+    await ns.sleep(10);
     ns.exec("tryUpgrade.js", "home");
     await ns.sleep(10);
     ns.exec("miniFactions.js", "home");

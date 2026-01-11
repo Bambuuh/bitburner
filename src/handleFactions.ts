@@ -1,4 +1,5 @@
 import { NS } from "@ns";
+import { getNerufluxLevel, isAtNeurofluxMax } from "./getNerufluxLevel";
 import { hasDoneFaction } from "./hasDoneFaction";
 
 type Faction = {
@@ -18,56 +19,82 @@ function canInstallAugumentation(ns: NS, aug: string): boolean {
 }
 
 export async function main(ns: NS): Promise<void> {
-  const factions: Record<string, Faction> = {
-    CyberSec: {
+  const factions: Faction[] = [
+    {
       name: "CyberSec",
       server: "CSEC",
       isDone: hasDoneFaction(ns, "CyberSec"),
     },
-    "Tian Di Hui": {
+    {
       name: "Tian Di Hui",
       city: "Chongqing",
       isDone: hasDoneFaction(ns, "Tian Di Hui"),
     },
-    NiteSec: {
+    {
       name: "NiteSec",
       server: "avmnite-02h",
       isDone: hasDoneFaction(ns, "NiteSec"),
     },
-    "The Black Hand": {
+    {
       name: "The Black Hand",
       server: "I.I.I.I",
       isDone: hasDoneFaction(ns, "The Black Hand"),
     },
-    BitRunners: {
+    {
       name: "BitRunners",
       server: "run4theh111z",
       isDone: hasDoneFaction(ns, "BitRunners"),
     },
-    Daedalus: {
+    {
       name: "Daedalus",
       isDone: hasDoneFaction(ns, "Daedalus"),
     },
-    "Leaving Cave": {
-      name: "LeavingCave",
-      server: "w0r1d_d43m0n",
-      isDone: false,
-    },
-  };
+  ];
+
+  const isAllServersMaxedOut = ns
+    .getPurchasedServers()
+    .every(
+      (server) => ns.getServerMaxRam(server) === ns.getPurchasedServerMaxRam()
+    );
+  const nextFaction = factions.find((faction) => !faction.isDone);
+
+  if (!nextFaction) {
+    if (!isAtNeurofluxMax(ns) && isAllServersMaxedOut) {
+      if (ns.singularity.checkFactionInvitations().includes("Daedalus")) {
+        ns.singularity.joinFaction("Daedalus");
+      }
+      if (ns.getPlayer().factions.includes("Daedalus")) {
+        const currentRep = ns.singularity.getFactionRep("Daedalus");
+        const requiredRep =
+          ns.singularity.getAugmentationRepReq("NeuroFlux Governor");
+        if (currentRep < requiredRep) {
+          ns.singularity.donateToFaction("Daedalus", ns.getPlayer().money);
+        } else {
+          let canInstall = true;
+          while (canInstall) {
+            const installed = ns.singularity.purchaseAugmentation(
+              "Daedalus",
+              "NeuroFlux Governor"
+            );
+            canInstall = installed;
+          }
+        }
+      }
+    } else {
+      ns.singularity.installAugmentations("main.js");
+    }
+
+    return;
+  }
 
   const joinedFactions = ns.getPlayer().factions;
 
-  if (joinedFactions.length > 0) {
+  if (nextFaction && joinedFactions.includes(nextFaction.name)) {
     const faction = joinedFactions[0];
     if (!ns.singularity.isBusy()) {
       const workTypes = ns.singularity.getFactionWorkTypes(faction);
       ns.singularity.workForFaction(faction, workTypes[0], true);
     }
-
-    // const isFocused = ns.singularity.isFocused();
-    // if (!isFocused) {
-    //   ns.singularity.setFocus(true);
-    // }
 
     if (faction === "Daedalus") {
       const currentFavor = ns.singularity.getFactionFavor(faction);
@@ -124,12 +151,6 @@ export async function main(ns: NS): Promise<void> {
         ns.singularity.getAugmentationPrice(a)
     );
 
-    const isAllServersMaxedOut = ns
-      .getPurchasedServers()
-      .every(
-        (server) => ns.getServerMaxRam(server) === ns.getPurchasedServerMaxRam()
-      );
-
     const missingRepForAug =
       auguments[0] &&
       ns.singularity.getAugmentationRepReq(auguments[0]) > currentRep;
@@ -173,37 +194,12 @@ export async function main(ns: NS): Promise<void> {
     return;
   }
 
-  if (
-    !factions["CyberSec"].isDone &&
-    ns.singularity.checkFactionInvitations().includes("CyberSec")
-  ) {
-    ns.singularity.joinFaction("CyberSec");
-  } else if (!factions["Tian Di Hui"].isDone) {
-    if (ns.getPlayer().city !== "Chongqing") {
+  if (nextFaction) {
+    if (nextFaction.city) {
       ns.singularity.travelToCity("Chongqing");
     }
-    if (ns.singularity.checkFactionInvitations().includes("Tian Di Hui")) {
-      ns.singularity.joinFaction("Tian Di Hui");
+    if (ns.singularity.checkFactionInvitations().includes(nextFaction.name)) {
+      ns.singularity.joinFaction(nextFaction.name);
     }
-  } else if (
-    !factions["NiteSec"].isDone &&
-    ns.singularity.checkFactionInvitations().includes("NiteSec")
-  ) {
-    ns.singularity.joinFaction("NiteSec");
-  } else if (
-    !factions["The Black Hand"].isDone &&
-    ns.singularity.checkFactionInvitations().includes("The Black Hand")
-  ) {
-    ns.singularity.joinFaction("The Black Hand");
-  } else if (
-    !factions["BitRunners"].isDone &&
-    ns.singularity.checkFactionInvitations().includes("BitRunners")
-  ) {
-    ns.singularity.joinFaction("BitRunners");
-  } else if (
-    !factions["Daedalus"].isDone &&
-    ns.singularity.checkFactionInvitations().includes("Daedalus")
-  ) {
-    ns.singularity.joinFaction("Daedalus");
   }
 }
